@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editorial Blogger — AI UPSC Content Generator</title>
+  <meta name="description" content="Generate SEO-optimized UPSC editorial blog posts from URLs and images using AI" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">✍️</div>
+        <div>
+          <div class="logo-title">Editorial Blogger</div>
+          <div class="logo-subtitle">AI-Powered UPSC Content Engine</div>
+        </div>
+      </div>
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        Powered by Gemini + Qwen VL
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="hero">
+      <h1 class="hero-title">
+        Generate <span class="gradient-text">UPSC Editorial</span><br />
+        Blog Posts Instantly
+      </h1>
+      <p class="hero-desc">
+        Drop article URLs or upload images — our AI pipeline extracts content, 
+        writes a structured UPSC article, generates a thumbnail, and publishes 
+        it to Blogger automatically.
+      </p>
+    </section>
+
+    <!-- ═══ FORM CARD ═══ -->
+    <div class="form-card" id="formCard">
+      <form id="generateForm" enctype="multipart/form-data">
+
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">🔗</div>
+            <div>
+              <h2 class="section-title">Source URLs</h2>
+              <p class="section-desc">Paste article, editorial, or news URLs</p>
+            </div>
+          </div>
+          <div id="urlList" class="url-list">
+            <div class="url-row" data-index="0">
+              <div class="input-wrap">
+                <span class="input-icon">🌐</span>
+                <input type="url" class="url-input" id="url-0" placeholder="https://thehindu.com/editorial/..." autocomplete="off" />
+                <button type="button" class="btn-remove-url" onclick="removeUrl(this)" title="Remove">✕</button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-add-url" onclick="addUrl()">+ Add another URL</button>
+        </div>
+
+        <div class="divider"><span>or</span></div>
+
+        <div class="section">
+          <div class="section-header">
+            <div class="section-icon">🖼️</div>
+            <div>
+              <h2 class="section-title">Upload Images</h2>
+              <p class="section-desc">Screenshots, article photos — AI will OCR and extract text</p>
+            </div>
+          </div>
+          <div class="drop-zone" id="dropZone"
+            onclick="document.getElementById('imageInput').click()"
+            ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+            <div class="drop-icon">📸</div>
+            <div class="drop-title">Drop images here</div>
+            <div class="drop-subtitle">or click to browse — JPG, PNG, WEBP (max 20MB each)</div>
+            <input type="file" id="imageInput" name="images" multiple accept="image/*" style="display:none" onchange="onFilePicked(event)" />
+          </div>
+          <div id="imagePreviewGrid" class="image-preview-grid"></div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-icon">⚡</div>
+          <div>
+            <strong>What happens next:</strong>
+            URLs fetched via Jina.ai · Images OCR'd by Qwen VL · Gemini writes UPSC article ·
+            RenderForm thumbnail · Published to Blogger · Google Indexing pinged
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span id="submitText">🚀 Generate &amp; Publish Blog Post</span>
+          <div id="submitLoader" class="btn-loader" style="display:none"></div>
+        </button>
+      </form>
+    </div>
+
+    <!-- ═══ PROGRESS CARD ═══ -->
+    <div class="progress-card" id="progressCard" style="display:none">
+      <div class="progress-header">
+        <div class="progress-status-icon" id="progressIcon">⚙️</div>
+        <div>
+          <div class="progress-title" id="progressTitle">Processing...</div>
+          <div class="progress-step" id="progressStep">Initializing pipeline</div>
+        </div>
+      </div>
+
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+
+      <!-- Pipeline dots -->
+      <div class="pipeline-steps">
+        <div class="pipe-step" id="pipe-fetch"><div class="pipe-dot"></div><div class="pipe-label">Fetch</div></div>
+        <div class="pipe-connector"></div>
+        <div class="pipe-step" id="pipe-ocr"><div class="pipe-dot"></div><div class="pipe-label">OCR</div></div>
+        <div class="pipe-connector"></div>
+        <div class="pipe-step" id="pipe-ai"><div class="pipe-dot"></div><div class="pipe-label">AI Write</div></div>
+        <div class="pipe-connector"></div>
+        <div class="pipe-step" id="pipe-thumb"><div class="pipe-dot"></div><div class="pipe-label">Thumbnail</div></div>
+        <div class="pipe-connector"></div>
+        <div class="pipe-step" id="pipe-drive"><div class="pipe-dot"></div><div class="pipe-label">Drive</div></div>
+        <div class="pipe-connector"></div>
+        <div class="pipe-step" id="pipe-html"><div class="pipe-dot"></div><div class="pipe-label">HTML</div></div>
+        <div class="pipe-connector"></div>
+        <div class="pipe-step" id="pipe-publish"><div class="pipe-dot"></div><div class="pipe-label">Publish</div></div>
+        <div class="pipe-connector"></div>
+        <div class="pipe-step" id="pipe-index"><div class="pipe-dot"></div><div class="pipe-label">Index</div></div>
+      </div>
+
+      <!-- Live Step Log -->
+      <div class="step-log" id="stepLog">
+        <div class="step-log-header" style="justify-content: space-between;">
+          <div>
+            <span class="step-log-title">📋 Live Pipeline Log</span><br>
+            <span class="step-log-hint">Click any step to see its output</span>
+          </div>
+          <div class="step-log-controls">
+            <button class="btn-collapse" onclick="expandAllSteps()">Expand All</button>
+            <button class="btn-collapse" onclick="collapseAllSteps()">Collapse All</button>
+          </div>
+        </div>
+        <div id="stepLogItems"></div>
+      </div>
+    </div>
+
+    <!-- ═══ RESULT CARD ═══ -->
+    <div class="result-card" id="resultCard" style="display:none">
+      <div class="result-header">
+        <div class="result-icon success" id="resultIcon">✅</div>
+        <div>
+          <div class="result-title" id="resultTitle">Blog Post Published!</div>
+          <div class="result-subtitle" id="resultSubtitle">Your article is now live</div>
+        </div>
+      </div>
+
+      <div class="result-grid" id="resultGrid"></div>
+
+      <div class="result-actions">
+        <a id="viewPostBtn" href="#" target="_blank" class="btn-view" style="display:none">🔗 View Blog Post</a>
+        <button class="btn-reset" onclick="resetForm()">← Generate Another</button>
+      </div>
+
+      <details class="json-preview" id="jsonPreview" style="display:none">
+        <summary>📄 View Full Article JSON</summary>
+        <pre id="jsonOutput" class="json-code"></pre>
+      </details>
+    </div>
+
+  </main>
+
+  <section class="how-it-works">
+    <h2 class="section-heading">How It Works</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">🔗</div>
+        <div class="step-title">Provide Sources</div>
+        <div class="step-body">Add article URLs or upload screenshot images as raw source material</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">🤖</div>
+        <div class="step-title">AI Extraction</div>
+        <div class="step-body">Jina.ai fetches URLs · Qwen VL performs OCR on images</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">✍️</div>
+        <div class="step-title">Gemini Writes</div>
+        <div class="step-body">Google Gemini generates a structured UPSC article with MCQs, Mains answers, and SEO data</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">04</div>
+        <div class="step-icon">🚀</div>
+        <div class="step-title">Auto-Publish</div>
+        <div class="step-body">Thumbnail generated → uploaded to Drive → posted to Blogger → Google indexing pinged</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>Editorial Blogger © 2025 · AKB Study Center</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
