@@ -24,9 +24,16 @@
           <div class="logo-subtitle">AI-Powered UPSC Content Engine</div>
         </div>
       </div>
-      <div class="header-badge">
-        <span class="badge-dot"></span>
-        Powered by Gemini + Qwen VL
+      <div class="header-actions" style="display: flex; align-items: center; gap: 15px;">
+        <select id="postType" class="post-type-select">
+          <option value="editorial">✍️ Editorial Post</option>
+          <option value="job_posting">💼 Job Posting</option>
+          <option value="normal">📝 Normal Post</option>
+        </select>
+        <div class="header-badge">
+          <span class="badge-dot"></span>
+          AI Content Engine
+        </div>
       </div>
     </div>
   </header>
@@ -34,10 +41,10 @@
   <main class="main">
     <section class="hero">
       <h1 class="hero-title">
-        Generate <span class="gradient-text">UPSC Editorial</span><br />
-        Blog Posts Instantly
+        Generate <span class="gradient-text" id="dynamicType">UPSC Editorial</span><br />
+        Articles Instantly
       </h1>
-      <p class="hero-desc">
+      <p class="hero-desc" id="heroDesc">
         Drop article URLs or upload images — our AI pipeline extracts content, 
         writes a structured UPSC article, generates a thumbnail, and publishes 
         it to Blogger automatically.

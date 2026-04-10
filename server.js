@@ -182,20 +182,191 @@ async function extractTextFromImage(imagePath, mimeType) {
   return '';
 }
 
-// 5. Generate structured UPSC article via Gemini
-async function generateStructuredArticle(content) {
+// 5. Generate structured article via Gemini
+async function generateStructuredArticle(content, postType = 'editorial') {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
     model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
   });
 
-  const prompt = `You must return ONLY valid JSON.
+  let prompt = '';
+
+  if (postType === 'job_posting') {
+    prompt = `You are a highly accurate data extraction + content optimization engine.
+
+Your task:
+1. Extract structured job recruitment data
+2. Improve readability of title, summary, and short_information (ONLY rephrase, DO NOT change meaning)
+3. Keep all factual data EXACT (dates, numbers, names)
+
+━━━━━━━━━━━━━━━━━━━━━━━
+🚨 STRICT RULES
+━━━━━━━━━━━━━━━━━━━━━━━
+
+1. DO NOT hallucinate.
+2. DO NOT change any facts (dates, numbers, posts, fees).
+3. DO NOT assume missing values.
+4. If data is missing → return "" (empty string).
+5. Extract data EXACTLY from input.
+6. Only improve:
+   - title (make SEO friendly)
+   - short_information (clear + readable)
+   - summary (3–5 line crisp summary)
+7. Keep everything else unchanged.
+8. Remove ads, unrelated text, promotions.
+9. Return ONLY valid JSON (no explanation, no markdown, no \`\`\`).
+
+━━━━━━━━━━━━━━━━━━━━━━━
+📦 OUTPUT FORMAT (STRICT)
+━━━━━━━━━━━━━━━━━━━━━━━
+
+{
+  "title": "",
+  "subtitle":"",
+  "short_information": "",
+  "hiringOrganization": "",
+  "location": "",
+  "state": "",
+  "pincode":"",
+  "advertisement_no":"",
+  "important_dates": [
+    {
+      "application_start_date": "",
+      "last_date": "",
+      "fee_payment_last_date": "",
+      "exam_date": "",
+      "admit_card": ""
+    }
+  ],
+
+  "application_fee": [
+    {
+      "general_ews_obc": "",
+      "sc_st_female": "",
+      "mode_of_payment": ""
+    }
+  ],
+
+  "age_limit": [
+    {
+      "age_calculated_upto": "",
+      "maximum_age": "",
+      "minimum_age": "",
+      "age_relexation": ""
+    }
+  ],
+
+  "vacancy_detail": [
+    {
+      "total_post": "",
+      "posts": [
+        {
+          "post_name": "",
+          "no_of_post": ""
+        }
+      ]
+    }
+  ],
+
+  "qualification": [
+    {
+      "post_name": "",
+      "eligibility_criteria": ""
+    }
+  ],
+  "salary": [
+    {
+      "posts": [
+        {
+          "post_name": "",
+          "min_salary": "",
+          "max_salary": ""
+        }
+      ]
+    }
+  ],
+
+  "degree_name": [],
+  "selection_mode": [],
+  "how_to_apply": [],
+  "apply_link": "",
+  "official_notification_link":"",
+  "official_website_link":"",
+  "label":[],
+  "tags":[],
+  "summary": ""
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+📌 EXTRACTION RULES
+━━━━━━━━━━━━━━━━━━━━━━━
+
+- title → make short slightly SEO-friendly.
+- subtitle → make slightly SEO-friendly (add key terms like "Apply Online", "Eligibility", "Last Date" if present in input)
+- short_information → rewrite into clean readable 3–5 lines
+- summary → short crisp 3–5 lines (factual only)
+
+- important_dates → extract all dates exactly
+- application_fee → category-wise fee
+- age_limit → exact values
+- vacancy_detail → total + post-wise breakup
+- qualification → post-wise eligibility
+- degree_name → on the basis of qualification array, get the degree name. In general Graduation, Post Graduation, Diploma, PhD, etc.
+- selection_mode → array like ["Written Exam", "Interview"]
+- how_to_apply → steps or paragraph
+- apply_link → official link only
+- official_notification_link → official notification link only
+- official_website_link → official website link only
+- label → RECRUITMENT, Central Govt Job|State Govt Job,PSU Job|Bank Job|Defence Job|Railway Job|Teaching Job|Nursing Job|Other
+- tags → generate on the basis of content
+- state → extract from the title or content. if not found then "India"
+- location → always capital of state. if not found then "New Delhi"
+- pincode → pincode of captital of state and if not found then make it:"110001"
+- advertisement_no → if not found then make it:"hiringOrganization"+"-"+"post_name-" + "year"
+━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ VALIDATION RULE
+━━━━━━━━━━━━━━━━━━━━━━━
+
+- Ensure output is valid JSON
+- Ensure all keys exist
+- Ensure arrays are not removed
+- If unsure → leave empty ""
+
+━━━━━━━━━━━━━━━━━━━━━━━
+INPUT:
+${content}`;
+  } else if (postType === 'normal') {
+    prompt = `You must return ONLY valid JSON.
+You are a professional content writer. Create an engaging blog post based on the input.
+STRICT JSON FORMAT:
+{
+  "structured": {
+    "title": "",
+    "introduction": "",
+    "sections": [
+       { "heading": "", "content": "" }
+    ],
+    "conclusion": ""
+  },
+  "seo": {
+    "meta_title": "",
+    "meta_description": "",
+    "keywords": [],
+    "label": ["BLOG"],
+    "tags": [],
+    "slug": ""
+  }
+}
+INPUT: ${content}`;
+  } else {
+    // DEFAULT: editorial (UPSC)
+    prompt = `You must return ONLY valid JSON.
 
 You are an expert UPSC / State PCS educator and answer-writing mentor.
 
 Convert the given content into an exam-oriented article suitable for UPSC aspirants.
 
-DO NOT hallucinate. Rewrite content in hindi to make it completely original.
+DO NOT hallucinate. Rewrite content in hindi + english (hindi heavy) (Easy understandable- don't use complex words in english or hindi) to make it completely original.
 
 STRICT JSON FORMAT (do not change this format):
 
@@ -233,39 +404,18 @@ STRICT JSON FORMAT (do not change this format):
     "internal_link_suggestions": []
   }
 }
-
 CRITICAL RULES:
 1. DO NOT return objects inside arrays — use plain strings only. All subheadings with strong html tag: <strong>subheadings</strong>
-2. Every array MUST have at least 3 items (background, concepts, pros, cons, way_forward)
+2. Every array MUST have at least 3 items
 3. NEVER leave fields empty
-4. At least 2 MCQs. mcqs.options must be a SINGLE STRING: "(a)... (b)... (c)... (d)..."
-   MCQ FORMAT: Statement-based (2-3 statements), options visible, correct answer + explanation.
-5. mains_150/mains_250 must have structure: Introduction (2-3 lines) → Body (sub-parts) → Conclusion
-6. Use simple UPSC language
-7. Rewrite in hindi: avoid similar sentence structure, change wording deeply, maintain meaning
-8. current_affairs_addon: 3-5 latest Indian context points (schemes, reports, judgments)
-
-FOR SEO:
-- meta_description: 150-160 characters, include main keyword
-- keywords: mix of SEO + UPSC keywords
-- tags: short phrases / blog labels
-- label: exactly ["NEWS","CURRENT AFFAIRS","UPSC","STATE PSC","ANSWER WRITING","EDITORIAL ANALYSIS"]
-- exam_relevance: 2-3 lines why topic matters for UPSC
-- internal_link_suggestions: 2 related topics
-- slug: lowercase, hyphen-separated
-- canonical: https://akbstudycenter.blogspot.com/slug
-- meta_title: SEO optimized, include primary keyword
-
-STRICT OUTPUT RULES:
-- Output MUST start with { and end with }
-- Do NOT use markdown or \`\`\`json
-- Do NOT add any text outside JSON
-- Use only double quotes
-- No trailing commas
-- JSON must be directly parsable with JSON.parse()
-
-INPUT:
-${content}`;
+4. At least 2 MCQs.
+5. Rewrite in English where appropriate.
+6. Don't use complex words in english and hindi.
+7. title should be catchy and interesting in english only so that urls can be generated easily. it should be of length not more than 36 characters including space.
+8. slug should be title in lowercase words seperated by hyphen(-).It should be of length not more than 36 characters including hyphen(-).
+9. label should have "NEWS","CURRENT AFFAIRS","EDITORIAL ANALYSIS","UPSC","STATE PCS", "ANSWER WRITING" in it.
+INPUT: ${content}`;
+  }
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
@@ -275,13 +425,287 @@ ${content}`;
   return JSON.parse(cleaned);
 }
 
-// 6. Build HTML article (like n8n "Code in JavaScript3")
-function buildHtmlArticle(data, imageUrl) {
+// 6. Build HTML article
+function buildHtmlArticle(data, imageUrl, postType = 'editorial') {
+  if (postType === 'job_posting') {
+    const job = data; // In job posting, the whole structure IS the job data
+    const safe = (v) => v ? v : "";
+    const list = (arr) => (arr || []).map(i => `<li>${i}</li>`).join('');
+
+    const dates = job.important_dates?.[0] || {};
+    const fee = job.application_fee?.[0] || {};
+    const age = job.age_limit?.[0] || {};
+    const vacancy = job.vacancy_detail?.[0] || {};
+    const posts = vacancy.posts || [];
+
+    const vacancyRows = posts.map(p => `
+    <tr>
+    <td style="padding:10px;border:1px solid #ddd;">${p.post_name}</td>
+    <td style="padding:10px;border:1px solid #ddd;text-align:center;">${p.no_of_post}</td>
+    </tr>
+    `).join('');
+
+    const selection = list(job.selection_mode && job.selection_mode.length > 0 ? job.selection_mode : ["Written Exam"]);
+    const degreeHtml = (job.degree_name && job.degree_name.length > 0 ? job.degree_name : ["Graduation"]).map(d => `<span style="background:#e8f5e9;padding:2px 6px;border-radius:4px;margin-right:4px;">${d}</span>`).join(' ');
+    const howtoapply = list(job.how_to_apply && job.how_to_apply.length > 0 ? job.how_to_apply : ["Visit <strong>Official Website</strong>", "Read the official Notification", "Check for <strong>Online Apply link</strong>", "Fill the Required details in the form", "Upload the Required Documents", "Review the filled form or Verify the Details.", "Click <strong>Submit</strong> Button"]);
+    const qualification = (job.qualification || []).map(q => `<li><strong>${q.post_name}:</strong> ${q.eligibility_criteria}</li>`).join('');
+
+    const salary = (job.salary || []).map(s => {
+      if (s.posts) {
+        return s.posts.map(p => `<li><strong>${p.post_name}:</strong> ${p.min_salary}-${p.max_salary}</li>`).join('');
+      }
+      return `<li><strong>Salary:</strong> ${s.min_salary}-${s.max_salary}</li>`;
+    }).join('');
+
+    const html = `<meta name="robots" content="index, follow"><meta property="og:image" content="${imageUrl}"><meta property="og:title" content="${job.title}"><meta name="description" content="${safe(job.summary)}">
+<meta name="keywords" content="${job.title}, govt jobs, apply online, vacancy">
+<h1 style="color:#0d47a1;text-align:center;">${job.subtitle || job.title}</h1>
+<div style="text-align:center;margin:20px 0;">
+  <img src="${imageUrl}" alt="${job.title}" style="width:100%;max-width:850px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);" />
+</div>
+<div style="background:#e3f2fd;padding:14px;border-left:5px solid #1e88e5;border-radius:8px;margin-bottom:15px;">
+<strong>📌 Short Information:</strong>
+<p>${job.short_information}</p>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+<div style="flex:1;min-width:150px;background:#fdecea;padding:12px;border-radius:8px;">
+<strong>📊 Total Posts</strong>
+<p>${vacancy.total_post}</p>
+</div>
+<div style="flex:1;min-width:150px;background:#e8f5e9;padding:12px;border-radius:8px;">
+<strong>📅 Last Date</strong>
+<p>${dates.last_date}</p>
+</div>
+<div style="flex:1;min-width:150px;background:#fff3e0;padding:12px;border-radius:8px;">
+<strong>🎓 Qualification</strong>
+<p>${degreeHtml}</p>
+</div>
+</div>
+<h2>📅 Important Dates</h2>
+<ul>
+<li>Start: ${dates.application_start_date}</li>
+<li>Last Date: ${dates.last_date}</li>
+${dates.fee_payment_last_date ? `<li>Fee Last Date: ${dates.fee_payment_last_date}</li>` : ''}
+${dates.exam_date ? `<li>Exam: ${dates.exam_date}</li>` : ''}
+${dates.admit_card ? `<li>Admit Card: ${dates.admit_card}</li>` : ''}
+</ul>
+${fee.general_ews_obc || fee.sc_st_female || fee.mode_of_payment ? ` <h2>💰 Application Fee</h2>
+<ul>
+${fee.general_ews_obc ? `<li>General/OBC: ${fee.general_ews_obc}</li>` : ''}
+${fee.sc_st_female ? `<li>SC/ST: ${fee.sc_st_female}</li>` : ''}
+${fee.mode_of_payment ? `<li>Mode: ${fee.mode_of_payment}</li>` : ''}
+</ul>` : ''}
+${age.minimum_age || age.maximum_age || age.age_calculated_upto || age.age_relexation ? `<h2>🎯 Age Limit</h2>
+<ul>
+${age.minimum_age ? `<li>Min: ${age.minimum_age}</li>` : ''}
+${age.maximum_age ? `<li>Max: ${age.maximum_age}</li>` : ''}
+${age.age_calculated_upto ? `<li>As on: ${age.age_calculated_upto}</li>` : ''}
+${age.age_relexation ? `<li>Relaxation: ${age.age_relexation}</li>` : ''}
+</ul>` : ''}
+${vacancyRows.length > 0 ? `<h2>📊 Vacancy Details</h2>
+<table style="width:100%;border-collapse:collapse;background:#ffffff;border:1px solid #ddd;">
+<tr style="background:#0d47a1;color:white;">
+<th style="padding:10px;border:1px solid #ddd;">Post</th>
+<th style="padding:10px;border:1px solid #ddd;">No. of Posts</th>
+</tr>
+${vacancyRows}
+</table>` : ''}
+${qualification.length > 0 ? `<h2>🎓 Qualification Detail</h2>
+<ul>${qualification}</ul>` : ''}
+${salary.length > 0 ? `<h2>🎓 Salary Detail</h2>
+<ul>${salary}</ul>` : ''}
+${selection.length > 0 ? `<h2>🧪 Selection Process</h2>
+<ul>${selection}</ul>` : ''}
+<div style="text-align:center;margin-top:25px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+<a href="${job.apply_link}" target="_blank" style="background:#0d47a1;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">🚀 Apply Online</a>
+</div>
+<span style="color: red;"><b><strong>Candidates can apply through link provided below or they can also apply through official site before last date.</strong></b></span>
+<div style="text-align:center;margin-top:25px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+<a href="${job.official_notification_link}" target="_blank" style="background:#2e7d32;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">📜 Official Notification</a>
+</div>
+<div style="text-align:center;margin-top:25px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+<a href="${job.official_website_link}" target="_blank" style="background:#ef6c00;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">🌐 Official Website</a>
+</div>
+<h2>📑 How to Apply</h2>
+<ul>${howtoapply}</ul>
+<h2>🖊️Summary</h2>
+<p>${job.summary}</p>
+<h2>❓ FAQs</h2>
+${dates.last_date ? `<p><strong>What is last date?</strong></p>
+<p><strong>Last Date:</strong> ${dates.last_date}</p>` : ''}
+${vacancy.total_post ? `<p><strong>What is total posts?</strong></p>
+<p><strong>Total Posts:</strong> ${vacancy.total_post}</p>` : ''}
+${age.minimum_age || age.maximum_age ? `<p><strong>What is age limit?</strong></p>
+<p><strong>Age Limit:</strong> ${age.minimum_age}-${age.maximum_age}</p>` : ''}
+${fee.general_ews_obc || fee.sc_st_female ? `<p><strong>What is application fee?</strong></p>
+<p><strong>Application Fee:</strong> ${fee.general_ews_obc || fee.sc_st_female}</p>` : ''}
+${qualification ? `<p><strong>What is qualification?</strong></p>
+<p><strong>Qualification:</strong> ${qualification}</p>` : ''}
+${salary ? `<p><strong>What is salary?</strong></p>
+<p><strong>Salary:</strong> ${salary}</p>` : ''}
+${selection ? `<p><strong>What is selection process?</strong></p>
+<p><strong>Selection Process:</strong> ${selection}</p>` : ''}
+
+<div style="margin-top:20px;">
+<strong>🏷️ Tags:</strong>
+${(job.tags || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;margin:3px;border-radius:5px;">${t}</span>`).join('')}
+${(job.label || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;margin:3px;border-radius:5px;">${t}</span>`).join('')}
+</div>`;
+
+    function toISO(dateStr) {
+      if (!dateStr) return new Date().toISOString().split('T')[0];
+      const d = new Date(dateStr);
+      if (isNaN(d)) return new Date().toISOString().split('T')[0];
+      return d.toISOString().split('T')[0];
+    }
+    const datePosted = toISO(dates.application_start_date);
+    const validThrough = toISO(dates.last_date);
+    const minSalary = (job.salary?.[0]?.posts?.[0]?.min_salary) || 20000;
+    const maxSalary = (job.salary?.[0]?.posts?.[0]?.max_salary) || 80000;
+    const locationName = job.location || "India";
+
+    const schema = `<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "JobPosting",
+ "title": "${job.title}",
+ "description": "${(job.summary || job.short_information || "").replace(/"/g, '\\"')}",
+ "identifier": {
+   "@type": "PropertyValue",
+   "name": "${job.hiringOrganization || "Government Recruitment"}",
+   "value": "${job.advertisement_no}"
+ },
+ "datePosted": "${datePosted}",
+ "validThrough": "${validThrough ? validThrough + "T23:59" : ""}",
+ "employmentType": "FULL_TIME",
+ "directApply": true,
+ "hiringOrganization": {
+   "@type": "Organization",
+   "name": "${job.hiringOrganization || "Government Organization"}",
+   "sameAs": "${job.official_website_link || job.official_notification_link || ""}"
+ },
+ "jobLocation": {
+   "@type": "Place",
+   "address": {
+     "@type": "PostalAddress",
+     "addressLocality": "${locationName || "India"}",
+     "addressRegion": "${job.state || ""}",
+     "postalCode": "${job.pincode || ""}",
+     "addressCountry": "IN"
+   }
+ },
+ "applicantLocationRequirements": {
+   "@type": "Country",
+   "name": "India"
+ },
+ "baseSalary": {
+   "@type": "MonetaryAmount",
+   "currency": "INR",
+   "value": {
+     "@type": "QuantitativeValue",
+     "minValue": ${minSalary || 20000},
+     "maxValue": ${maxSalary || 80000},
+     "unitText": "MONTH"
+   }
+ },
+ "educationRequirements": "${(job.degree_name || []).join('or ')}",
+ "experienceRequirements": "Freshers eligible; experience may required for some posts",
+ "industry": "Government Recruitment",
+ "occupationalCategory": "${(job.tags && job.tags[0]) || "Government Job"}",
+ "jobBenefits": "Government job benefits, allowances, job security"
+}
+</script>
+
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+ {
+ "@type": "Question",
+ "name": "What is the last date to apply?",
+ "acceptedAnswer": {
+   "@type": "Answer",
+   "text": "The last date is ${dates.last_date || "not specified"}."
+ }
+ },
+ {
+ "@type": "Question",
+ "name": "What is total number of posts?",
+ "acceptedAnswer": {
+   "@type": "Answer",
+   "text": "Total ${vacancy.total_post || "not specified"} posts are available."
+ }
+ },
+ {
+ "@type": "Question",
+ "name": "What is age limit?",
+ "acceptedAnswer": {
+   "@type": "Answer",
+   "text": "Total ${age.minimum_age || "not specified"} to ${age.maximum_age || "not specified"} posts are available."
+ }
+ },
+ {
+ "@type": "Question",
+ "name": "What is application fee?",
+ "acceptedAnswer": {
+   "@type": "Answer",
+   "text": "${fee.general_ews_obc || "not specified"} to ${fee.sc_st_female || "not specified"} "
+ }
+ },
+ {
+ "@type": "Question",
+ "name": "What is qualification?",
+ "acceptedAnswer": {
+   "@type": "Answer",
+   "text": "${qualification || "not specified"}"
+ }
+ },
+ {
+ "@type": "Question",
+ "name": "What is salary?",
+ "acceptedAnswer": {
+   "@type": "Answer",
+   "text": "${salary || "not specified"}"
+ }
+ },
+ {
+ "@type": "Question",
+ "name": "What is selection process?",
+ "acceptedAnswer": {
+   "@type": "Answer",
+   "text": "${selection || "not specified"}"
+ }
+ }
+ ]
+} 
+</script>`;
+    return (html + schema).replace(/\\n/g, '').replace(/\n/g, '').trim();
+  }
+
+  if (postType === 'normal') {
+    const s = data.structured;
+    const seo = data.seo;
+    const imgTag = imageUrl ? `<div style="text-align:center;margin:20px 0;"><img src="${imageUrl}" style="width:100%;max-width:850px;border-radius:12px;" /></div>` : '';
+    const sections = (s.sections || []).map(sec => `<h2>${sec.heading}</h2><p>${sec.content}</p>`).join('');
+    const htmlContent = `<div style="font-family:sans-serif;line-height:1.6;max-width:800px;margin:auto;">
+       <h1>${s.title || seo.meta_title}</h1>
+       ${imgTag}
+       <p>${s.introduction}</p>
+       ${sections}
+       <p>${s.conclusion}</p>
+     </div>`;
+    return htmlContent.replace(/\\n/g, '').replace(/\n/g, '').trim();
+  }
+
+  // DEFAULT: editorial (UPSC)
   const s = data.structured;
   const seo = data.seo;
-
+  const publishedDate = new Date();
+  const year = publishedDate.getFullYear();
+  const month = String(publishedDate.getMonth() + 1).padStart(2, '0');
+  const postSlug = seo.slug || (seo.meta_title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const list = (arr) => (arr || []).map(i => `<li>${i}</li>`).join('');
-
   const mcqs = (s.mcqs || []).map(q => `
 <details style="background:#fffde7;border-radius:6px;margin-bottom:10px;padding:12px;">
 <summary><strong>${q.question}</strong><p>${q.options}</p></summary>
@@ -362,24 +786,27 @@ ${(seo.label || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;m
    "name": "AKB Study Center",
    "logo": {"@type": "ImageObject","url": "https://blogger.googleusercontent.com/img/a/AVvXsEgExco8lsQgQeKUawycNvDGQgELMityYm1QuG3v57pBJoVJXiNpnCs7iG3lIDxGfs9X-BYF8M9XBpt1nHQG-XnT4n2mRE9Kdas3XPxGFKIEEKTWJ_d_LBJLKqI4Ukl0iEeFjTpsgnmvAnC9rOWdrDlc26RssCtR05q6GwDfa4booA7R6Md_Mp2liIXcOtQ=s700"}
  },
- "mainEntityOfPage": {"@type": "WebPage","@id": "${seo.canonical}"}
+ "mainEntityOfPage": {"@type": "WebPage","@id": "https://www.jkdmm.in/${year}/${month}/${postSlug}.html"}
 }
 </script>`;
-
-  // Clean up newlines
-  return html
-    .replace(/\\n/g, '')
-    .replace(/\n/g, '')
-    .trim();
+  return html.replace(/\\n/g, '').replace(/\n/g, '').trim();
 }
 
 // 7. RenderForm — generate thumbnail
-async function generateThumbnail(title) {
+async function generateThumbnail(title, postType = 'editorial') {
+  let template = process.env.RENDERFORM_TEMPLATE || 'bad-mermaids-stretch-weakly-1555';
+  let titleKey = 'title.text';
+
+  if (postType === 'job_posting') {
+    template = 'purple-dragonflies-push-fiercely-1833';
+    titleKey = 'text_1.text';
+  }
+
   const resp = await axios.post(
     'https://get.renderform.io/api/v2/render',
     {
-      template: process.env.RENDERFORM_TEMPLATE || 'ugly-dragons-hang-blindly-1567',
-      data: { 'title.text': title },
+      template: template,
+      data: { [titleKey]: title },
     },
     {
       headers: {
@@ -499,7 +926,7 @@ function pushStep(jobId, stepResult) {
 }
 
 // ─── MAIN PIPELINE ──────────────────────────────────────────────────────────
-async function runPipeline(jobId, urls, imagePaths) {
+async function runPipeline(jobId, urls, imagePaths, postType = 'editorial') {
   try {
     // ── Step 1: Fetch URL content ────────────────────────────────────────────
     pushStep(jobId, { id: 'fetch', icon: '🔗', label: 'Fetching URL Content', status: 'active', data: null });
@@ -576,33 +1003,48 @@ async function runPipeline(jobId, urls, imagePaths) {
     }
 
     // ── Step 4: Generate structured article via Gemini ────────────────────────
-    pushStep(jobId, { id: 'ai', icon: '✨', label: 'Gemini Writing UPSC Article', status: 'active', data: null });
-    updateJob(jobId, { step: 'Generating UPSC article with Gemini AI...', progress: 35 });
+    pushStep(jobId, { id: 'ai', icon: '✨', label: `Gemini Writing ${postType === 'job_posting' ? 'Job' : 'Article'}`, status: 'active', data: null });
+    updateJob(jobId, { step: `Generating ${postType} with Gemini AI...`, progress: 35 });
 
-    const articleData = await generateStructuredArticle(mergedContent);
-    const s = articleData.structured;
-    const seo = articleData.seo;
+    const articleData = await generateStructuredArticle(mergedContent, postType);
+    let s, seo, postTitle;
+
+    if (postType === 'job_posting') {
+      s = articleData;
+      seo = {
+        meta_title: articleData.title,
+        meta_description: articleData.summary,
+        label: articleData.label,
+        tags: articleData.tags,
+        slug: (articleData.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      };
+      postTitle = articleData.title;
+    } else {
+      s = articleData.structured;
+      seo = articleData.seo;
+      postTitle = s.title || seo.meta_title;
+    }
 
     pushStep(jobId, {
-      id: 'ai', icon: '✨', label: 'Article Generated by Gemini', status: 'done',
+      id: 'ai', icon: '✨', label: 'Content Generated by Gemini', status: 'done',
       data: {
         type: 'article',
-        title: s.title,
+        title: postTitle,
         metaTitle: seo.meta_title,
         metaDescription: seo.meta_description,
-        examRelevance: seo.exam_relevance,
-        introduction: s.introduction,
+        examRelevance: seo.exam_relevance || 'N/A',
+        introduction: s.introduction || '',
         slug: seo.slug,
-        canonical: seo.canonical,
-        keywords: seo.keywords,
-        tags: seo.tags,
-        labels: seo.label,
+        canonical: seo.canonical || '',
+        keywords: seo.keywords || [],
+        tags: seo.tags || [],
+        labels: seo.label || [],
         mcqCount: s.mcqs?.length || 0,
         backgroundCount: s.background?.length || 0,
-        currentAffairs: s.current_affairs_addon,
-        mains150Q: s.mains_150?.[0]?.question,
-        mains250Q: s.mains_250?.[0]?.question,
-        wayForward: s.way_forward,
+        currentAffairs: s.current_affairs_addon || [],
+        mains150Q: s.mains_150?.[0]?.question || '',
+        mains250Q: s.mains_250?.[0]?.question || '',
+        wayForward: s.way_forward || [],
       },
     });
     updateJob(jobId, { articleData, step: 'Article JSON generated', progress: 55 });
@@ -615,13 +1057,13 @@ async function runPipeline(jobId, urls, imagePaths) {
     let driveFileId = '';
     let thumbnailDownloadUrl = '';
     try {
-      thumbnailDownloadUrl = await generateThumbnail(s.title);
+      thumbnailDownloadUrl = await generateThumbnail(postTitle, postType);
       pushStep(jobId, {
         id: 'thumb', icon: '🎨', label: 'Thumbnail Generated', status: 'done',
         data: {
           type: 'thumbnail',
           renderFormUrl: thumbnailDownloadUrl,
-          title: s.title,
+          title: postTitle,
         },
       });
       updateJob(jobId, { step: 'Downloading & uploading thumbnail...', progress: 65 });
@@ -632,7 +1074,7 @@ async function runPipeline(jobId, urls, imagePaths) {
       pushStep(jobId, { id: 'drive', icon: '💾', label: 'Uploading to Google Drive', status: 'active', data: null });
       updateJob(jobId, { step: 'Uploading thumbnail to Google Drive...', progress: 70 });
 
-      driveFileId = await uploadToGoogleDrive(buffer, `${s.title}.png`, contentType);
+      driveFileId = await uploadToGoogleDrive(buffer, `${postTitle}.png`, contentType);
       driveImageUrl = `https://lh3.googleusercontent.com/d/${driveFileId}=w1200`;
 
       pushStep(jobId, {
@@ -655,7 +1097,7 @@ async function runPipeline(jobId, urls, imagePaths) {
     // ── Step 7: Build HTML article ─────────────────────────────────────────
     pushStep(jobId, { id: 'html', icon: '🏗️', label: 'Building HTML Article', status: 'active', data: null });
     updateJob(jobId, { step: 'Building HTML article...', progress: 78 });
-    const htmlContent = buildHtmlArticle(articleData, driveImageUrl);
+    const htmlContent = buildHtmlArticle(articleData, driveImageUrl, postType);
 
     pushStep(jobId, {
       id: 'html', icon: '🏗️', label: 'HTML Article Built', status: 'done',
@@ -673,7 +1115,7 @@ async function runPipeline(jobId, urls, imagePaths) {
 
     let bloggerPost = null;
     try {
-      bloggerPost = await publishToBlogger(s.title, htmlContent, seo.label, seo.slug);
+      bloggerPost = await publishToBlogger(postTitle, htmlContent, seo.label, seo.slug);
       pushStep(jobId, {
         id: 'publish', icon: '📤', label: 'Published to Blogger', status: 'done',
         data: {
@@ -735,7 +1177,7 @@ async function runPipeline(jobId, urls, imagePaths) {
         driveFileId,
         driveImageUrl,
         thumbnailUrl: thumbnailDownloadUrl,
-        title: s.title,
+        title: postTitle,
         slug: seo.slug,
         articleData,
       },
@@ -777,12 +1219,15 @@ app.post('/api/generate', upload.array('images', 10), async (req, res) => {
       return res.status(400).json({ error: 'Please provide at least one URL or image.' });
     }
 
+    const postType = req.body.postType || 'editorial';
+
     const jobId = uuidv4();
     jobs[jobId] = {
       jobId,
       status: 'running',
       step: 'Starting pipeline...',
       progress: 0,
+      postType,
       createdAt: new Date().toISOString(),
       sseClients: [],
     };
@@ -790,7 +1235,7 @@ app.post('/api/generate', upload.array('images', 10), async (req, res) => {
     res.json({ jobId });
 
     // Run pipeline asynchronously
-    runPipeline(jobId, urls, imagePaths);
+    runPipeline(jobId, urls, imagePaths, postType);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

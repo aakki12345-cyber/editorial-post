@@ -61,6 +61,34 @@ function renderImagePreviews() {
   });
 }
 
+// ─── Post Type Management ───────────────────────────────────────────────────
+const postTypeConfigs = {
+  editorial: {
+    title: 'UPSC Editorial',
+    desc: 'Drop article URLs or upload images — our AI pipeline extracts content, writes a structured UPSC article, generates a thumbnail, and publishes it to Blogger automatically.',
+    btn: '🚀 Generate & Publish UPSC Post'
+  },
+  job_posting: {
+    title: 'Job Posting',
+    desc: 'Paste recruitment links or upload job notification images. Our AI will extract structured data, generate high-intent HTML with SEO Schema, and post it instantly.',
+    btn: '💼 Generate & Publish Job Post'
+  },
+  normal: {
+    title: 'Normal Blog',
+    desc: 'Standard blog post generation. Extracts key points from any source and writes a clean, engaging article for your Blogger audience.',
+    btn: '📝 Generate & Publish Blog Post'
+  }
+};
+
+document.getElementById('postType').addEventListener('change', (e) => {
+  const config = postTypeConfigs[e.target.value];
+  if (!config) return;
+  
+  document.getElementById('dynamicType').textContent = config.title;
+  document.getElementById('heroDesc').textContent = config.desc;
+  document.getElementById('submitText').textContent = config.btn;
+});
+
 // ─── Form Submit ──────────────────────────────────────────────────────────────
 document.getElementById('generateForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -75,6 +103,7 @@ document.getElementById('generateForm').addEventListener('submit', async (e) => 
 
   const formData = new FormData();
   formData.append('urls', JSON.stringify(urls));
+  formData.append('postType', document.getElementById('postType').value);
   selectedFiles.forEach(f => formData.append('images', f));
 
   try {
