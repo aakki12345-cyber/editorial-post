@@ -183,11 +183,22 @@ async function extractTextFromImage(imagePath, mimeType) {
 }
 
 // 5. Generate structured article via Gemini
-async function generateStructuredArticle(content, postType = 'editorial') {
+async function generateStructuredArticle(content, postType = 'editorial', importantText = '') {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
     model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
   });
+
+  const contextSection = importantText
+    ? `━━━━━━━━━━━━━━━━━━━━━━━
+🚨 IMPORTANT INSTRUCTIONS / EXTRA CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━
+${importantText}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+📚 SOURCE MATERIAL
+━━━━━━━━━━━━━━━━━━━━━━━
+` : '';
 
   let prompt = '';
 
@@ -334,6 +345,7 @@ Your task:
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 INPUT:
+${contextSection}
 ${content}`;
   } else if (postType === 'normal') {
     prompt = `You must return ONLY valid JSON.
@@ -357,7 +369,9 @@ STRICT JSON FORMAT:
     "slug": ""
   }
 }
-INPUT: ${content}`;
+INPUT: 
+${contextSection}
+${content}`;
   } else {
     // DEFAULT: editorial (UPSC)
     prompt = `You must return ONLY valid JSON.
@@ -374,6 +388,13 @@ STRICT JSON FORMAT (do not change this format):
   "structured": {
     "title": "",
     "current_affairs_addon": [],
+    "featured_snippet": {
+      "question": "",
+      "answer": ""
+    },
+    "alt_text": "",
+    "key_facts": [],
+    "why_in_news": [],
     "introduction": "",
     "background": [],
     "concepts": [],
@@ -390,6 +411,9 @@ STRICT JSON FORMAT (do not change this format):
         "answer": "",
         "explanation": ""
       }
+    ],
+    "faqs": [
+      {"question":"","answer":""}
     ]
   },
   "seo": {
@@ -399,7 +423,6 @@ STRICT JSON FORMAT (do not change this format):
     "label": [],
     "tags": [],
     "slug": "",
-    "canonical": "",
     "exam_relevance": "",
     "internal_link_suggestions": []
   }
@@ -414,7 +437,17 @@ CRITICAL RULES:
 7. title should be catchy and interesting in english only so that urls can be generated easily. it should be of length not more than 36 characters including space.
 8. slug should be title in lowercase words seperated by hyphen(-).It should be of length not more than 36 characters including hyphen(-).
 9. label should have "NEWS","CURRENT AFFAIRS","EDITORIAL ANALYSIS","UPSC","STATE PCS", "ANSWER WRITING" in it.
-INPUT: ${content}`;
+10.featured_snippet -Add a short 2-3 line definition for featured snippet.Simple Hindi + English mix.Direct question-answer format. Question should be start with "What is [topic name]" and answer should be 2-3 lines.
+11.alt_text - alt_text for image seo friendly.
+12. meta_title - meta title for blog post seo friendly. It contains "UPSC GS1/2/3/4 2026", "Analysis", etc.
+13. meta_description - meta description  is rich and keyword for seo friendly.
+14. tags - tags for blog post seo friendly.
+15. exam_relevance - exam relevance for blog post seo friendly.
+16. keywords - keywords for blog post seo friendly. first keyword is "UPSC GS1/2/3/4 Topic" . Other keywords should be related to the subject and topic.
+17. key_facts - key facts for blog post seo friendly. This is static GK which is related to the content of context provided. it should be 3-5 points.
+INPUT: 
+${contextSection}
+${content}`;
   }
 
   const result = await model.generateContent(prompt);
@@ -715,14 +748,23 @@ ${(job.label || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;m
 
   const imgTag = imageUrl
     ? `<div style="text-align:center;margin:20px 0;">
-  <img src="${imageUrl}" alt="${seo.meta_title}" style="width:100%;max-width:850px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);" />
+  <img src="${imageUrl}" alt="${s.alt_text}" style="width:100%;max-width:850px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);" />
 </div>`
     : '';
 
-  const html = `<meta name="description" content="${seo.meta_description}"><meta name="keywords" content="${(seo.keywords || []).join(', ')}">
+  const html = `<p><strong>By AKB | UPSC Educator</strong></p><meta name="description" content="${seo.meta_description}"><meta name="keywords" content="${(seo.keywords || []).join(', ')}">
 <div style="background:#ffffff;font-family:Segoe UI,Arial;line-height:1.8;margin:auto;max-width:900px;padding:20px;">
 <h1 style="color:#0d47a1;font-size:30px;">${seo.meta_title}</h1>
 ${imgTag}
+
+<div style="background:#fff3e0;padding:12px;border-left:5px solid #ff9800;border-radius:6px;margin-bottom:15px;padding:14px;">
+<strong>📌 ${s.featured_snippet.question}</strong>
+<p>${s.featured_snippet.answer}</p>
+</div>
+<div style="background:#e8f5e9;padding:12px;border-left:5px solid #43a047;border-radius:6px;margin-bottom:15px;padding:14px;">
+<strong>📰 Why in News?</strong>
+<ul>${list(s.why_in_news)}</ul>
+</div>
 <div style="background:#fcf7c1;border-left:5px solid #a09402;border-radius:6px;margin-bottom:15px;padding:14px;">
 <strong>📌 In Short:</strong>
 <p>${seo.meta_description}</p>
@@ -731,7 +773,11 @@ ${imgTag}
 <strong>🎯 Exam Relevance:</strong>
 <p>${seo.exam_relevance}</p>
 </div>
-<p style="background:#f1e0f3;padding:10px;border-radius:6px;"><strong>🔑 Keywords:</strong> ${(seo.keywords || []).join(', ')}</p>
+<p style="background:#f1e0f3;padding:10px;border-radius:6px;"><strong>${seo.keywords[0]}:</strong> ${(seo.keywords || []).join(', ')}</p>
+<div style="background:#d09ddbff;padding:12px;border-left:5px solid #482451ff;border-radius:6px;margin-bottom:15px;">
+<strong>📊 Key Facts:</strong>
+<ul>${list(s.key_facts)}</ul>
+</div>
 <div style="background:#e8f5e9;padding:12px;border-left:5px solid #43a047;border-radius:6px;margin-bottom:15px;">
 <strong>📰 Current Affairs Add-on:</strong>
 <ul>${list(s.current_affairs_addon)}</ul>
@@ -752,6 +798,15 @@ ${imgTag}
 </div>
 <h2 style="color:#004d40;border-bottom:2px solid #ddd;padding-bottom:5px;">🧾 Conclusion</h2>
 <p>${s.conclusion}</p>
+
+<div style="background:#e3f2fd;padding:10px;border-radius:6px;">
+<strong>🔗 Related Articles:</strong>
+<ul>
+<li><a href="/search/label/EDITORIAL%20ANALYSIS">Editorial Analysis</a></li>
+<li><a href="/search/label/UPSC">UPSC Notes</a></li>
+</ul>
+</div>
+
 <hr style="border:1px solid #ddd;margin:30px 0;">
 <h2 style="color:#5e35b1;">📝 Mains Answer (150 words)</h2>
 <strong>${(s.mains_150 || [{}])[0].question}</strong>
@@ -763,6 +818,12 @@ ${imgTag}
 <h2 style="color:#f9a825;">❓ Prelims MCQs</h2>
 ${mcqs}
 <hr style="border:1px solid #ddd;margin:30px 0;">
+<h2>❓ FAQs</h2>
+${(s.faqs || []).map(f => `
+<details>
+<summary><strong>${f.question}</strong></summary>
+<p>${f.answer}</p>
+</details>`).join('')}
 <div style="background:#e3f2fd;border-radius:6px;padding:12px;">
 <strong>🔗 Related Topics:</strong>
 <ul>${list(seo.internal_link_suggestions)}</ul>
@@ -770,23 +831,42 @@ ${mcqs}
 <div style="margin-top:20px;">
 <strong>🏷️ Tags:</strong>
 ${(seo.tags || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;margin:3px;border-radius:5px;">${t}</span>`).join('')}
-${(seo.keywords || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;margin:3px;border-radius:5px;">${t}</span>`).join('')}
-${(seo.label || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;margin:3px;border-radius:5px;">${t}</span>`).join('')}
 </div></div>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": ${JSON.stringify(
+    (s.faqs || []).map(f => ({
+      "@type": "Question",
+      "name": f.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.answer
+      }
+    }))
+  )}
+}
+</script>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
  "@type": "Article",
  "headline": "${seo.meta_title}",
  "description": "${seo.meta_description}",
- "image": "${imageUrl || ''}",
- "author": {"@type": "Person","name": "AKB"},
+ "author": {"@type": "Person","name": "By AKB | UPSC Educator"},
  "publisher": {
    "@type": "Organization",
-   "name": "AKB Study Center",
-   "logo": {"@type": "ImageObject","url": "https://blogger.googleusercontent.com/img/a/AVvXsEgExco8lsQgQeKUawycNvDGQgELMityYm1QuG3v57pBJoVJXiNpnCs7iG3lIDxGfs9X-BYF8M9XBpt1nHQG-XnT4n2mRE9Kdas3XPxGFKIEEKTWJ_d_LBJLKqI4Ukl0iEeFjTpsgnmvAnC9rOWdrDlc26RssCtR05q6GwDfa4booA7R6Md_Mp2liIXcOtQ=s700"}
+   "name": "JKDMM",
+   "logo": {
+     "@type": "ImageObject",
+     "url": "https://blogger.googleusercontent.com/img/a/AVvXsEgExco8lsQgQeKUawycNvDGQgELMityYm1QuG3v57pBJoVJXiNpnCs7iG3lIDxGfs9X-BYF8M9XBpt1nHQG-XnT4n2mRE9Kdas3XPxGFKIEEKTWJ_d_LBJLKqI4Ukl0iEeFjTpsgnmvAnC9rOWdrDlc26RssCtR05q6GwDfa4booA7R6Md_Mp2liIXcOtQ=s700"
+   }
  },
- "mainEntityOfPage": {"@type": "WebPage","@id": "https://www.jkdmm.in/${year}/${month}/${postSlug}.html"}
+ "mainEntityOfPage": {
+   "@type": "WebPage",
+   "@id": "https://www.jkdmm.in/${year}/${month}/${postSlug}.html"
+ }
 }
 </script>`;
   return html.replace(/\\n/g, '').replace(/\n/g, '').trim();
@@ -926,7 +1006,7 @@ function pushStep(jobId, stepResult) {
 }
 
 // ─── MAIN PIPELINE ──────────────────────────────────────────────────────────
-async function runPipeline(jobId, urls, imagePaths, postType = 'editorial') {
+async function runPipeline(jobId, urls, imagePaths, postType = 'editorial', importantText = '') {
   try {
     // ── Step 1: Fetch URL content ────────────────────────────────────────────
     pushStep(jobId, { id: 'fetch', icon: '🔗', label: 'Fetching URL Content', status: 'active', data: null });
@@ -1006,7 +1086,7 @@ async function runPipeline(jobId, urls, imagePaths, postType = 'editorial') {
     pushStep(jobId, { id: 'ai', icon: '✨', label: `Gemini Writing ${postType === 'job_posting' ? 'Job' : 'Article'}`, status: 'active', data: null });
     updateJob(jobId, { step: `Generating ${postType} with Gemini AI...`, progress: 35 });
 
-    const articleData = await generateStructuredArticle(mergedContent, postType);
+    const articleData = await generateStructuredArticle(mergedContent, postType, importantText);
     let s, seo, postTitle;
 
     if (postType === 'job_posting') {
@@ -1220,6 +1300,7 @@ app.post('/api/generate', upload.array('images', 10), async (req, res) => {
     }
 
     const postType = req.body.postType || 'editorial';
+    const importantText = req.body.importantText || '';
 
     const jobId = uuidv4();
     jobs[jobId] = {
@@ -1235,7 +1316,7 @@ app.post('/api/generate', upload.array('images', 10), async (req, res) => {
     res.json({ jobId });
 
     // Run pipeline asynchronously
-    runPipeline(jobId, urls, imagePaths, postType);
+    runPipeline(jobId, urls, imagePaths, postType, importantText);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

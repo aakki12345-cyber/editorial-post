@@ -104,6 +104,7 @@ document.getElementById('generateForm').addEventListener('submit', async (e) => 
   const formData = new FormData();
   formData.append('urls', JSON.stringify(urls));
   formData.append('postType', document.getElementById('postType').value);
+  formData.append('importantText', document.getElementById('importantText').value.trim());
   selectedFiles.forEach(f => formData.append('images', f));
 
   try {
