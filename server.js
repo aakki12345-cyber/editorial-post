@@ -854,7 +854,7 @@ ${(seo.tags || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;ma
  "@type": "Article",
  "headline": "${seo.meta_title}",
  "description": "${seo.meta_description}",
- "author": {"@type": "Person","name": "By AKB | UPSC Educator"},
+ "author": {"@type": "Person","name": "AKB"},
  "publisher": {
    "@type": "Organization",
    "name": "JKDMM",
