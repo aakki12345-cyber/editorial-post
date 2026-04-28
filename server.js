@@ -436,7 +436,7 @@ CRITICAL RULES:
 6. Don't use complex words in english and hindi.
 7. title should be catchy and interesting in english only so that urls can be generated easily. it should be of length not more than 36 characters including space.
 8. slug should be title in lowercase words seperated by hyphen(-).It should be of length not more than 36 characters including hyphen(-).
-9. label should have "NEWS","CURRENT AFFAIRS","EDITORIAL ANALYSIS","UPSC","STATE PCS", "ANSWER WRITING" in it.
+9. Ensure the first label should always be "EDITORIAL ANALYSIS" and other can be "ANSWER WRITING","CURRENT AFFAIRS " if related to it.
 10.featured_snippet -Add a short 2-3 line definition for featured snippet.Simple Hindi + English mix.Direct question-answer format. Question should be start with "What is [topic name]" and answer should be 2-3 lines.
 11.alt_text - alt_text for image seo friendly.
 12. meta_title - meta title for blog post seo friendly. It contains "UPSC GS1/2/3/4 2026", "Analysis", etc.
