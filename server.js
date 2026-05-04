@@ -376,11 +376,11 @@ ${content}`;
     // DEFAULT: editorial (UPSC)
     prompt = `You must return ONLY valid JSON.
 
-You are an expert UPSC / State PCS educator and answer-writing mentor.
+You are an expert UPSC / State PCS educator, Editorial Analyst and answer-writing mentor.
 
 Convert the given content into an exam-oriented article suitable for UPSC aspirants.
 
-DO NOT hallucinate. Rewrite content in hindi + english (hindi heavy) (Easy understandable- don't use complex words in english or hindi) to make it completely original.
+DO NOT hallucinate. Rewrite content in English in depth with about 1500-2000 words (Easy understandable- don't use complex words in english) to make it completely original.
 
 STRICT JSON FORMAT (do not change this format):
 
