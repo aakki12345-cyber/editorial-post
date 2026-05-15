@@ -202,179 +202,7 @@ ${importantText}
 
   let prompt = '';
 
-  if (postType === 'job_posting') {
-    prompt = `You are a highly accurate data extraction + content optimization engine.
-
-Your task:
-1. Extract structured job recruitment data
-2. Improve readability of title, summary, and short_information (ONLY rephrase, DO NOT change meaning)
-3. Keep all factual data EXACT (dates, numbers, names)
-
-━━━━━━━━━━━━━━━━━━━━━━━
-🚨 STRICT RULES
-━━━━━━━━━━━━━━━━━━━━━━━
-
-1. DO NOT hallucinate.
-2. DO NOT change any facts (dates, numbers, posts, fees).
-3. DO NOT assume missing values.
-4. If data is missing → return "" (empty string).
-5. Extract data EXACTLY from input.
-6. Only improve:
-   - title (make SEO friendly)
-   - short_information (clear + readable)
-   - summary (3–5 line crisp summary)
-7. Keep everything else unchanged.
-8. Remove ads, unrelated text, promotions.
-9. Return ONLY valid JSON (no explanation, no markdown, no \`\`\`).
-
-━━━━━━━━━━━━━━━━━━━━━━━
-📦 OUTPUT FORMAT (STRICT)
-━━━━━━━━━━━━━━━━━━━━━━━
-
-{
-  "title": "",
-  "subtitle":"",
-  "short_information": "",
-  "hiringOrganization": "",
-  "location": "",
-  "state": "",
-  "pincode":"",
-  "advertisement_no":"",
-  "important_dates": [
-    {
-      "application_start_date": "",
-      "last_date": "",
-      "fee_payment_last_date": "",
-      "exam_date": "",
-      "admit_card": ""
-    }
-  ],
-
-  "application_fee": [
-    {
-      "general_ews_obc": "",
-      "sc_st_female": "",
-      "mode_of_payment": ""
-    }
-  ],
-
-  "age_limit": [
-    {
-      "age_calculated_upto": "",
-      "maximum_age": "",
-      "minimum_age": "",
-      "age_relexation": ""
-    }
-  ],
-
-  "vacancy_detail": [
-    {
-      "total_post": "",
-      "posts": [
-        {
-          "post_name": "",
-          "no_of_post": ""
-        }
-      ]
-    }
-  ],
-
-  "qualification": [
-    {
-      "post_name": "",
-      "eligibility_criteria": ""
-    }
-  ],
-  "salary": [
-    {
-      "posts": [
-        {
-          "post_name": "",
-          "min_salary": "",
-          "max_salary": ""
-        }
-      ]
-    }
-  ],
-
-  "degree_name": [],
-  "selection_mode": [],
-  "how_to_apply": [],
-  "apply_link": "",
-  "official_notification_link":"",
-  "official_website_link":"",
-  "label":[],
-  "tags":[],
-  "summary": ""
-}
-
-━━━━━━━━━━━━━━━━━━━━━━━
-📌 EXTRACTION RULES
-━━━━━━━━━━━━━━━━━━━━━━━
-
-- title → make short slightly SEO-friendly.
-- subtitle → make slightly SEO-friendly (add key terms like "Apply Online", "Eligibility", "Last Date" if present in input)
-- short_information → rewrite into clean readable 3–5 lines
-- summary → short crisp 3–5 lines (factual only)
-
-- important_dates → extract all dates exactly
-- application_fee → category-wise fee
-- age_limit → exact values
-- vacancy_detail → total + post-wise breakup
-- qualification → post-wise eligibility
-- degree_name → on the basis of qualification array, get the degree name. In general Graduation, Post Graduation, Diploma, PhD, etc.
-- selection_mode → array like ["Written Exam", "Interview"]
-- how_to_apply → steps or paragraph
-- apply_link → official link only
-- official_notification_link → official notification link only
-- official_website_link → official website link only
-- label → RECRUITMENT, Central Govt Job|State Govt Job,PSU Job|Bank Job|Defence Job|Railway Job|Teaching Job|Nursing Job|Other
-- tags → generate on the basis of content
-- state → extract from the title or content. if not found then "India"
-- location → always capital of state. if not found then "New Delhi"
-- pincode → pincode of captital of state and if not found then make it:"110001"
-- advertisement_no → if not found then make it:"hiringOrganization"+"-"+"post_name-" + "year"
-━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ VALIDATION RULE
-━━━━━━━━━━━━━━━━━━━━━━━
-
-- Ensure output is valid JSON
-- Ensure all keys exist
-- Ensure arrays are not removed
-- If unsure → leave empty ""
-
-━━━━━━━━━━━━━━━━━━━━━━━
-INPUT:
-${contextSection}
-${content}`;
-  } else if (postType === 'normal') {
-    prompt = `You must return ONLY valid JSON.
-You are a professional content writer. Create an engaging blog post based on the input.
-STRICT JSON FORMAT:
-{
-  "structured": {
-    "title": "",
-    "introduction": "",
-    "sections": [
-       { "heading": "", "content": "" }
-    ],
-    "conclusion": ""
-  },
-  "seo": {
-    "meta_title": "",
-    "meta_description": "",
-    "keywords": [],
-    "label": ["BLOG"],
-    "tags": [],
-    "slug": ""
-  }
-}
-INPUT: 
-${contextSection}
-${content}`;
-  } else {
-    // DEFAULT: editorial (UPSC)
-    prompt = `You must return ONLY valid JSON.
+  prompt = `You must return ONLY valid JSON.
 
 You are an expert UPSC / State PCS educator, Editorial Analyst and answer-writing mentor.
 
@@ -470,19 +298,18 @@ CRITICAL RULES:
 27. Write like an experienced UPSC mentor explaining concepts to aspirants. Avoid robotic sentence structure.
 28. mains_150 - Add 3-5 Mains-style analytical points in 150-word format.
 29. mains_250 - Add 3-4 Mains-style analytical points in 250-word format.
-28. government_schemes - Add 3-5 relevant government schemes, constitutional provisions, committees, missions, policies, SDGs, reports, or international agreements related to the topic.
-29. counter_arguments - Add 2-4 balanced counter perspectives, implementation constraints, economic concerns, or opposing viewpoints related to the issue.
-30. mains_keywords - Add 5-10 important analytical keywords or phrases useful in UPSC Mains answers.
-31. india_specific_relevance - Add 3-5 points explaining why the issue is important specifically for India’s governance, economy, society, or foreign policy.
-32. essay_angles - Add 3-5 philosophical, ethical, governance, or societal dimensions useful for UPSC Essay paper.
-33. interlinkages - Connect the topic with Economy, Geography, Ethics, Environment, Governance, Society, International Relations, or Technology wherever relevant.
-34. future_risks - Add 3-5 future governance, economic, social, environmental, or geopolitical risks if the issue remains unresolved.
+30. government_schemes - Add 3-5 relevant government schemes, constitutional provisions, committees, missions, policies, SDGs, reports, or international agreements related to the topic.
+31. counter_arguments - Add 2-4 balanced counter perspectives, implementation constraints, economic concerns, or opposing viewpoints related to the issue.
+32. mains_keywords - Add 5-10 important analytical keywords or phrases useful in UPSC Mains answers.
+33. india_specific_relevance - Add 3-5 points explaining why the issue is important specifically for India’s governance, economy, society, or foreign policy.
+34. essay_angles - Add 3-5 philosophical, ethical, governance, or societal dimensions useful for UPSC Essay paper.
+35. interlinkages - Connect the topic with Economy, Geography, Ethics, Environment, Governance, Society, International Relations, or Technology wherever relevant.
+36. future_risks - Add 3-5 future governance, economic, social, environmental, or geopolitical risks if the issue remains unresolved.
 
 
 INPUT: 
 ${contextSection}
 ${content}`;
-  }
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
@@ -492,279 +319,8 @@ ${content}`;
   return JSON.parse(cleaned);
 }
 
-// 6. Build HTML article
 function buildHtmlArticle(data, imageUrl, postType = 'editorial') {
   imageUrl = imageUrl || "https://lh3.googleusercontent.com/d/1m0saesFzaDIiYYwwB-cgA6jga0Usjgqj=w1200";
-  if (postType === 'job_posting') {
-    const job = data; // In job posting, the whole structure IS the job data
-    const safe = (v) => v ? v : "";
-    const list = (arr) => (arr || []).map(i => `<li>${i}</li>`).join('');
-
-    const dates = job.important_dates?.[0] || {};
-    const fee = job.application_fee?.[0] || {};
-    const age = job.age_limit?.[0] || {};
-    const vacancy = job.vacancy_detail?.[0] || {};
-    const posts = vacancy.posts || [];
-
-    const vacancyRows = posts.map(p => `
-    <tr>
-    <td style="padding:10px;border:1px solid #ddd;">${p.post_name}</td>
-    <td style="padding:10px;border:1px solid #ddd;text-align:center;">${p.no_of_post}</td>
-    </tr>
-    `).join('');
-
-    const selection = list(job.selection_mode && job.selection_mode.length > 0 ? job.selection_mode : ["Written Exam"]);
-    const degreeHtml = (job.degree_name && job.degree_name.length > 0 ? job.degree_name : ["Graduation"]).map(d => `<span style="background:#e8f5e9;padding:2px 6px;border-radius:4px;margin-right:4px;">${d}</span>`).join(' ');
-    const howtoapply = list(job.how_to_apply && job.how_to_apply.length > 0 ? job.how_to_apply : ["Visit <strong>Official Website</strong>", "Read the official Notification", "Check for <strong>Online Apply link</strong>", "Fill the Required details in the form", "Upload the Required Documents", "Review the filled form or Verify the Details.", "Click <strong>Submit</strong> Button"]);
-    const qualification = (job.qualification || []).map(q => `<li><strong>${q.post_name}:</strong> ${q.eligibility_criteria}</li>`).join('');
-
-    const salary = (job.salary || []).map(s => {
-      if (s.posts) {
-        return s.posts.map(p => `<li><strong>${p.post_name}:</strong> ${p.min_salary}-${p.max_salary}</li>`).join('');
-      }
-      return `<li><strong>Salary:</strong> ${s.min_salary}-${s.max_salary}</li>`;
-    }).join('');
-
-    const html = `<meta name="robots" content="index, follow"><meta property="og:image" content="${imageUrl}"><meta property="og:title" content="${job.title}"><meta name="description" content="${safe(job.summary)}">
-<meta name="keywords" content="${job.title}, govt jobs, apply online, vacancy">
-<h1 style="color:#0d47a1;text-align:center;">${job.subtitle || job.title}</h1>
-<div style="text-align:center;margin:20px 0;">
-  <img src="${imageUrl}" alt="${job.title}" style="width:100%;max-width:850px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);" />
-</div>
-<div style="background:#e3f2fd;padding:14px;border-left:5px solid #1e88e5;border-radius:8px;margin-bottom:15px;">
-<strong>📌 Short Information:</strong>
-<p>${job.short_information}</p>
-</div>
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
-<div style="flex:1;min-width:150px;background:#fdecea;padding:12px;border-radius:8px;">
-<strong>📊 Total Posts</strong>
-<p>${vacancy.total_post}</p>
-</div>
-<div style="flex:1;min-width:150px;background:#e8f5e9;padding:12px;border-radius:8px;">
-<strong>📅 Last Date</strong>
-<p>${dates.last_date}</p>
-</div>
-<div style="flex:1;min-width:150px;background:#fff3e0;padding:12px;border-radius:8px;">
-<strong>🎓 Qualification</strong>
-<p>${degreeHtml}</p>
-</div>
-</div>
-<h2>📅 Important Dates</h2>
-<ul>
-<li>Start: ${dates.application_start_date}</li>
-<li>Last Date: ${dates.last_date}</li>
-${dates.fee_payment_last_date ? `<li>Fee Last Date: ${dates.fee_payment_last_date}</li>` : ''}
-${dates.exam_date ? `<li>Exam: ${dates.exam_date}</li>` : ''}
-${dates.admit_card ? `<li>Admit Card: ${dates.admit_card}</li>` : ''}
-</ul>
-${fee.general_ews_obc || fee.sc_st_female || fee.mode_of_payment ? ` <h2>💰 Application Fee</h2>
-<ul>
-${fee.general_ews_obc ? `<li>General/OBC: ${fee.general_ews_obc}</li>` : ''}
-${fee.sc_st_female ? `<li>SC/ST: ${fee.sc_st_female}</li>` : ''}
-${fee.mode_of_payment ? `<li>Mode: ${fee.mode_of_payment}</li>` : ''}
-</ul>` : ''}
-${age.minimum_age || age.maximum_age || age.age_calculated_upto || age.age_relexation ? `<h2>🎯 Age Limit</h2>
-<ul>
-${age.minimum_age ? `<li>Min: ${age.minimum_age}</li>` : ''}
-${age.maximum_age ? `<li>Max: ${age.maximum_age}</li>` : ''}
-${age.age_calculated_upto ? `<li>As on: ${age.age_calculated_upto}</li>` : ''}
-${age.age_relexation ? `<li>Relaxation: ${age.age_relexation}</li>` : ''}
-</ul>` : ''}
-${vacancyRows.length > 0 ? `<h2>📊 Vacancy Details</h2>
-<table style="width:100%;border-collapse:collapse;background:#ffffff;border:1px solid #ddd;">
-<tr style="background:#0d47a1;color:white;">
-<th style="padding:10px;border:1px solid #ddd;">Post</th>
-<th style="padding:10px;border:1px solid #ddd;">No. of Posts</th>
-</tr>
-${vacancyRows}
-</table>` : ''}
-${qualification.length > 0 ? `<h2>🎓 Qualification Detail</h2>
-<ul>${qualification}</ul>` : ''}
-${salary.length > 0 ? `<h2>🎓 Salary Detail</h2>
-<ul>${salary}</ul>` : ''}
-${selection.length > 0 ? `<h2>🧪 Selection Process</h2>
-<ul>${selection}</ul>` : ''}
-<div style="text-align:center;margin-top:25px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-<a href="${job.apply_link}" target="_blank" style="background:#0d47a1;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">🚀 Apply Online</a>
-</div>
-<span style="color: red;"><b><strong>Candidates can apply through link provided below or they can also apply through official site before last date.</strong></b></span>
-<div style="text-align:center;margin-top:25px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-<a href="${job.official_notification_link}" target="_blank" style="background:#2e7d32;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">📜 Official Notification</a>
-</div>
-<div style="text-align:center;margin-top:25px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-<a href="${job.official_website_link}" target="_blank" style="background:#ef6c00;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">🌐 Official Website</a>
-</div>
-<h2>📑 How to Apply</h2>
-<ul>${howtoapply}</ul>
-<h2>🖊️Summary</h2>
-<p>${job.summary}</p>
-<h2>❓ FAQs</h2>
-${dates.last_date ? `<p><strong>What is last date?</strong></p>
-<p><strong>Last Date:</strong> ${dates.last_date}</p>` : ''}
-${vacancy.total_post ? `<p><strong>What is total posts?</strong></p>
-<p><strong>Total Posts:</strong> ${vacancy.total_post}</p>` : ''}
-${age.minimum_age || age.maximum_age ? `<p><strong>What is age limit?</strong></p>
-<p><strong>Age Limit:</strong> ${age.minimum_age}-${age.maximum_age}</p>` : ''}
-${fee.general_ews_obc || fee.sc_st_female ? `<p><strong>What is application fee?</strong></p>
-<p><strong>Application Fee:</strong> ${fee.general_ews_obc || fee.sc_st_female}</p>` : ''}
-${qualification ? `<p><strong>What is qualification?</strong></p>
-<p><strong>Qualification:</strong> ${qualification}</p>` : ''}
-${salary ? `<p><strong>What is salary?</strong></p>
-<p><strong>Salary:</strong> ${salary}</p>` : ''}
-${selection ? `<p><strong>What is selection process?</strong></p>
-<p><strong>Selection Process:</strong> ${selection}</p>` : ''}
-
-<div style="margin-top:20px;">
-<strong>🏷️ Tags:</strong>
-${(job.tags || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;margin:3px;border-radius:5px;">${t}</span>`).join('')}
-${(job.label || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;margin:3px;border-radius:5px;">${t}</span>`).join('')}
-</div>`;
-
-    function toISO(dateStr) {
-      if (!dateStr) return new Date().toISOString().split('T')[0];
-      const d = new Date(dateStr);
-      if (isNaN(d)) return new Date().toISOString().split('T')[0];
-      return d.toISOString().split('T')[0];
-    }
-    const datePosted = toISO(dates.application_start_date);
-    const validThrough = toISO(dates.last_date);
-    const minSalary = (job.salary?.[0]?.posts?.[0]?.min_salary) || 20000;
-    const maxSalary = (job.salary?.[0]?.posts?.[0]?.max_salary) || 80000;
-    const locationName = job.location || "India";
-
-    const schema = `<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "JobPosting",
- "title": "${job.title}",
- "description": "${(job.summary || job.short_information || "").replace(/"/g, '\\"')}",
- "identifier": {
-   "@type": "PropertyValue",
-   "name": "${job.hiringOrganization || "Government Recruitment"}",
-   "value": "${job.advertisement_no}"
- },
- "datePosted": "${datePosted}",
- "validThrough": "${validThrough ? validThrough + "T23:59" : ""}",
- "employmentType": "FULL_TIME",
- "directApply": true,
- "hiringOrganization": {
-   "@type": "Organization",
-   "name": "${job.hiringOrganization || "Government Organization"}",
-   "sameAs": "${job.official_website_link || job.official_notification_link || ""}"
- },
- "jobLocation": {
-   "@type": "Place",
-   "address": {
-     "@type": "PostalAddress",
-     "addressLocality": "${locationName || "India"}",
-     "addressRegion": "${job.state || ""}",
-     "postalCode": "${job.pincode || ""}",
-     "addressCountry": "IN"
-   }
- },
- "applicantLocationRequirements": {
-   "@type": "Country",
-   "name": "India"
- },
- "baseSalary": {
-   "@type": "MonetaryAmount",
-   "currency": "INR",
-   "value": {
-     "@type": "QuantitativeValue",
-     "minValue": ${minSalary || 20000},
-     "maxValue": ${maxSalary || 80000},
-     "unitText": "MONTH"
-   }
- },
- "educationRequirements": "${(job.degree_name || []).join('or ')}",
- "experienceRequirements": "Freshers eligible; experience may required for some posts",
- "industry": "Government Recruitment",
- "occupationalCategory": "${(job.tags && job.tags[0]) || "Government Job"}",
- "jobBenefits": "Government job benefits, allowances, job security"
-}
-</script>
-
-<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "FAQPage",
- "mainEntity": [
- {
- "@type": "Question",
- "name": "What is the last date to apply?",
- "acceptedAnswer": {
-   "@type": "Answer",
-   "text": "The last date is ${dates.last_date || "not specified"}."
- }
- },
- {
- "@type": "Question",
- "name": "What is total number of posts?",
- "acceptedAnswer": {
-   "@type": "Answer",
-   "text": "Total ${vacancy.total_post || "not specified"} posts are available."
- }
- },
- {
- "@type": "Question",
- "name": "What is age limit?",
- "acceptedAnswer": {
-   "@type": "Answer",
-   "text": "Total ${age.minimum_age || "not specified"} to ${age.maximum_age || "not specified"} posts are available."
- }
- },
- {
- "@type": "Question",
- "name": "What is application fee?",
- "acceptedAnswer": {
-   "@type": "Answer",
-   "text": "${fee.general_ews_obc || "not specified"} to ${fee.sc_st_female || "not specified"} "
- }
- },
- {
- "@type": "Question",
- "name": "What is qualification?",
- "acceptedAnswer": {
-   "@type": "Answer",
-   "text": "${qualification || "not specified"}"
- }
- },
- {
- "@type": "Question",
- "name": "What is salary?",
- "acceptedAnswer": {
-   "@type": "Answer",
-   "text": "${salary || "not specified"}"
- }
- },
- {
- "@type": "Question",
- "name": "What is selection process?",
- "acceptedAnswer": {
-   "@type": "Answer",
-   "text": "${selection || "not specified"}"
- }
- }
- ]
-} 
-</script>`;
-    return (html + schema).replace(/\\n/g, '').replace(/\n/g, '').trim();
-  }
-
-  if (postType === 'normal') {
-    const s = data.structured;
-    const seo = data.seo;
-    const imgTag = imageUrl ? `<div style="text-align:center;margin:20px 0;"><img src="${imageUrl}" style="width:100%;max-width:850px;border-radius:12px;" /></div>` : '';
-    const sections = (s.sections || []).map(sec => `<h2>${sec.heading}</h2><p>${sec.content}</p>`).join('');
-    const htmlContent = `<div style="font-family:sans-serif;line-height:1.6;max-width:800px;margin:auto;">
-       <h1>${s.title || seo.meta_title}</h1>
-       ${imgTag}
-       <p>${s.introduction}</p>
-       ${sections}
-       <p>${s.conclusion}</p>
-     </div>`;
-    return htmlContent.replace(/\\n/g, '').replace(/\n/g, '').trim();
-  }
 
   // DEFAULT: editorial (UPSC)
   const s = data.structured;
@@ -872,53 +428,67 @@ ${(job.label || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;m
 </div>`
     : '';
 
-  const html = `<p><strong>By AKB | UPSC Educator</strong></p>
-
-<p><strong>📅 Last Updated:</strong> ${new Date().toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })}</p>
-
-<p><strong>⏱️ Reading Time:</strong> 8-10 minutes</p>
- <link rel="canonical" href="https://www.jkdmm.in/${year}/${month}/${postSlug}.html">
- <meta property="og:title" content="${seo.meta_title}">
+  const html = `
+<style>
+  .blog-container { background:#ffffff;font-family:Segoe UI,Arial,sans-serif;line-height:1.8;margin:auto;max-width:900px;padding:20px; }
+  .blog-title { color:#0d47a1;font-size:30px; }
+  .box { padding:14px;border-radius:6px;margin-bottom:15px; }
+  .box-warning { background:#fff3e0;border-left:5px solid #ff9800; }
+  .box-success { background:#e8f5e9;border-left:5px solid #43a047; }
+  .box-info { background:#fcf7c1;border-left:5px solid #a09402; }
+  .box-primary { background:#e3f2fd;border-left:5px solid #1e88e5; }
+  .box-purple { background:#d09ddbff;border-left:5px solid #482451ff; }
+  .box-amber { background:#fff8e1;border-left:5px solid #fbc02d; }
+  .box-pink { background:#fce4ec;border-left:5px solid #c2185b; }
+  .box-red { background:#ffebee;border-left:5px solid #d32f2f; }
+  .box-lightblue { background:#e1f5fe;border-left:5px solid #0288d1; }
+  .box-lightpurple { background:#f3e5f5;border-left:5px solid #7b1fa2; }
+  .box-grey { background:#f5f5f5;padding:15px;border-radius:8px;line-height:2; }
+  .keyword-tag { background:#f1e0f3;padding:10px;border-radius:6px; }
+  .toc { background:#f5f5f5;padding:15px;border-radius:8px;margin-bottom:20px; }
+  .heading { border-bottom:2px solid #ddd;padding-bottom:5px; }
+  .heading-blue { color:#1565c0; }
+  .heading-purple { color:#6a1b9a; }
+  .heading-green { color:#2e7d32; }
+  .heading-red { color:#c62828; }
+</style>
+<meta property="og:title" content="${seo.meta_title}">
 <meta property="og:description" content="${seo.meta_description}">
 <meta property="og:image" content="${imageUrl}">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="article:modified_time" content="${new Date().toISOString()}">
 <meta name="description" content="${seo.meta_description}">
 <meta name="keywords" content="${(seo.keywords || []).join(', ')}">
-<div style="background:#ffffff;font-family:Segoe UI,Arial;line-height:1.8;margin:auto;max-width:900px;padding:20px;">
-<h1 style="color:#0d47a1;font-size:30px;">${seo.meta_title}</h1>
+<div class="blog-container">
+<h1 class="blog-title">${seo.meta_title}</h1>
 ${imgTag}
 
-<div style="background:#fff3e0;padding:12px;border-left:5px solid #ff9800;border-radius:6px;margin-bottom:15px;padding:14px;">
+<div class="box box-warning">
 <strong>📌 ${s.featured_snippet.question}</strong>
 <p>${s.featured_snippet.answer}</p>
 </div>
-<div style="background:#e8f5e9;padding:12px;border-left:5px solid #43a047;border-radius:6px;margin-bottom:15px;padding:14px;">
+<div class="box box-success">
 <strong>📰 Why in News?</strong>
 <ul>${list(s.why_in_news)}</ul>
 </div>
-<div style="background:#fcf7c1;border-left:5px solid #a09402;border-radius:6px;margin-bottom:15px;padding:14px;">
+<div class="box box-info">
 <strong>📌 In Short:</strong>
 <p>${seo.meta_description}</p>
 </div>
-<div style="background:#e3f2fd;border-left:5px solid #1e88e5;border-radius:6px;margin-bottom:15px;padding:14px;">
+<div class="box box-primary">
 <strong>🎯 Exam Relevance:</strong>
 <p>${seo.exam_relevance}</p>
 </div>
-<p style="background:#f1e0f3;padding:10px;border-radius:6px;"><strong>${seo.keywords[0]}:</strong> ${(seo.keywords || []).join(', ')}</p>
-<div style="background:#d09ddbff;padding:12px;border-left:5px solid #482451ff;border-radius:6px;margin-bottom:15px;">
+<p class="keyword-tag"><strong>${seo.keywords[0]}:</strong> ${(seo.keywords || []).join(', ')}</p>
+<div class="box box-purple">
 <strong>📊 Key Facts:</strong>
 <ul>${list(s.key_facts)}</ul>
 </div>
-<div style="background:#e8f5e9;padding:12px;border-left:5px solid #43a047;border-radius:6px;margin-bottom:15px;">
+<div class="box box-success">
 <strong>📰 Current Affairs Add-on:</strong>
 <ul>${list(s.current_affairs_addon)}</ul>
 </div>
-<div id="toc" style="background:#f5f5f5;padding:15px;border-radius:8px;margin-bottom:20px;">
+<div id="toc" class="toc">
 <strong>📚 Table of Contents</strong>
 <ul>
 <li><a href="#intro">Introduction</a></li>
@@ -930,25 +500,25 @@ ${imgTag}
 <li><a href="#conclusion">Conclusion</a></li>
 </ul>
 </div>
-<h2 id="intro" style="color:#1565c0;border-bottom:2px solid #ddd;padding-bottom:5px;">🧭 Introduction</h2>
+<h2 id="intro" class="heading heading-blue">🧭 Introduction</h2>
 <p>${s.introduction}</p>
-<h2 id="background" style="color:#1565c0;border-bottom:2px solid #ddd;padding-bottom:5px;">🌍 Background</h2>
+<h2 id="background" class="heading heading-blue">🌍 Background</h2>
 <ul>${list(s.background)}</ul>
-<h2 id="concepts" style="color:#6a1b9a;border-bottom:2px solid #ddd;padding-bottom:5px;">📊 Key Concepts</h2>
+<h2 id="concepts" class="heading heading-purple">📊 Key Concepts</h2>
 <ul>${list(s.concepts)}</ul>
-<h2 id="pros" style="color:#2e7d32;border-bottom:2px solid #ddd;padding-bottom:5px;">✅ Advantages</h2>
+<h2 id="pros" class="heading heading-green">✅ Advantages</h2>
 <ul>${list(s.pros)}</ul>
-<h2 id="cons" style="color:#c62828;border-bottom:2px solid #ddd;padding-bottom:5px;">⚠️ Challenges</h2>
+<h2 id="cons" class="heading heading-red">⚠️ Challenges</h2>
 <ul>${list(s.cons)}</ul>
-<div id="wayforward" style="background:#fff3e0;border-left:5px solid #fb8c00;border-radius:6px;margin-top:15px;padding:14px;">
+<div id="wayforward" class="box box-warning">
 <strong>🚀 Way Forward:</strong>
 <ul>${list(s.way_forward)}</ul>
 </div>
 
-<h2 id="conclusion" style="color:#004d40;border-bottom:2px solid #ddd;padding-bottom:5px;">🧾 Conclusion</h2>
+<h2 id="conclusion" class="heading heading-green">🧾 Conclusion</h2>
 <p>${s.conclusion}</p>
 
-<div id="revi" style="background:#fff8e1;padding:15px;border-left:5px solid #fbc02d;border-radius:6px;margin-top:15px;padding:14px;">
+<div id="revi" class="box box-amber">
 <strong>🧠 Quick Revision Points</strong>
 <ul>
 ${list(s.mains_enrichment)}
@@ -957,52 +527,52 @@ ${list(s.mains_enrichment)}
 <hr style="border:1px solid #ddd;margin:30px 0;"> 
 <h2>🔄 Cause-Effect Flowchart</h2>
 
-<div style="background:#f5f5f5;padding:15px;border-radius:8px;line-height:2;">
+<div class="box box-grey">
 ${(s.flowchart || []).join(' → ')}
 </div>
 <h2>📊 Important Data & Reports</h2>
 <ul>${list(s.data_points)}</ul>
-<div style="background:#e8f5e9;padding:15px;border-left:5px solid #2e7d32;border-radius:6px;margin-top:15px;padding:14px;">
+<div class="box box-success">
 <strong>🏛️ Government Schemes & Policies</strong>
 <ul>${list(s.government_schemes)}</ul>
 </div>
-<div style="background:#fce4ec;padding:15px;border-left:5px solid #c2185b;border-radius:6px;margin-top:15px;padding:14px;">
+<div class="box box-pink">
 <strong>⚖️ Counter Perspective</strong>
 <ul>${list(s.counter_arguments)}</ul>
 </div>
-<h2 style="color:#1565c0;border-bottom:2px solid #ddd;padding-bottom:5px;">
+<h2 class="heading heading-blue">
 🇮🇳 Why This Matters for India
 </h2>
 <ul>${list(s.india_specific_relevance)}</ul>
-<div style="background:#ffebee;padding:15px;border-left:5px solid #d32f2f;border-radius:6px;margin-top:15px;padding:14px;">
+<div class="box box-red">
 <strong>⚠️ Future Risks</strong>
 <ul>${list(s.future_risks)}</ul>
 </div>
-<div style="background:#ede7f6;padding:15px;border-left:5px solid #512da8;border-radius:6px;margin-top:15px;padding:14px;">
+<div class="box box-purple">
 <strong>📘 Keywords for Mains</strong>
 <ul>${list(s.mains_keywords)}</ul>
 </div>
-<div style="background:#fff8e1;padding:15px;border-left:5px solid #f9a825;border-radius:6px;margin-top:15px;padding:14px;">
+<div class="box box-amber">
 <strong>✍️ Essay Dimensions</strong>
 <ul>${list(s.essay_angles)}</ul>
 </div>
 <h2>📚 UPSC Previous Year Questions</h2>
 <ul>${list(s.pyqs)}</ul>
 <hr style="border:1px solid #ddd;margin:30px 0;">
-<div style="background:#e1f5fe;padding:15px;border-left:5px solid #0288d1;border-radius:6px;margin-top:15px;padding:14px;">
+<div class="box box-lightblue">
 <strong>🔗 Interdisciplinary Linkages</strong>
 <ul>${list(s.interlinkages)}</ul>
 </div>
-<div style="background:#f3e5f5;padding:15px;border-left:5px solid #7b1fa2;border-radius:6px;margin-top:15px;padding:14px;">
+<div class="box box-lightpurple">
 <strong>🧠 Expert Insight for UPSC Aspirants</strong>
 <p>${s.expert_insight}</p>
 </div>
-<hr style="border:1px solid #ddd;margin:30px 0;border-radius:6px;margin-top:15px;padding:14px;">
-<div id="about" style="background:#f8f9fa;padding:15px;border-radius:10px;margin-top:20px;">
+<hr style="border:1px solid #ddd;margin:30px 0;">
+<div id="about" class="box box-grey">
 <h3>About the Author</h3>
 <p><strong>AKB</strong> is a UPSC educator focusing on Editorial Analysis, GS Mains preparation, Economy and Current Affairs.</p>
 </div>
-<div style="background:#e3f2fd;padding:10px;border-radius:6px;">
+<div class="box box-primary">
 <strong>🔗 Related Articles:</strong>
 <ul>
 <li><a href="/search/label/EDITORIAL%20ANALYSIS">Editorial Analysis</a></li>
@@ -1100,7 +670,7 @@ ${JSON.stringify({
 
     "author": {
       "@type": "Person",
-      "name": "AKB",
+      "name": "Akhilesh Kumar Bhaskar",
       "url": "https://www.jkdmm.in/p/about-us.html",
       "sameAs": [
         "https://www.jkdmm.in/"
@@ -1110,8 +680,8 @@ ${JSON.stringify({
 
     "publisher": {
       "@type": "Organization",
-      "name": "JKDMM",
-      "url": "https://www.jkdmm.in/",
+      "name": "JKDMM-Jobs • Knowledge • Daily Materials & Mocktests",
+      "url": "https://www.jkdmm.in",
       "logo": {
         "@type": "ImageObject",
         "url": "https://blogger.googleusercontent.com/img/a/AVvXsEgExco8lsQgQeKUawycNvDGQgELMityYm1QuG3v57pBJoVJXiNpnCs7iG3lIDxGfs9X-BYF8M9XBpt1nHQG-XnT4n2mRE9Kdas3XPxGFKIEEKTWJ_d_LBJLKqI4Ukl0iEeFjTpsgnmvAnC9rOWdrDlc26RssCtR05q6GwDfa4booA7R6Md_Mp2liIXcOtQ=s700"
@@ -1125,6 +695,7 @@ ${JSON.stringify({
     "articleSection": [
       "Editorial Analysis",
       "UPSC Current Affairs",
+      "State PSC Current Affairs",
       "GS Analysis"
     ],
 
@@ -1163,7 +734,7 @@ ${JSON.stringify({
     }
   })}
 </script>`;
-  return html.replace(/\\n/g, '').replace(/\n/g, '').trim();
+  return html.trim();
 }
 
 // 7. RenderForm — generate thumbnail
