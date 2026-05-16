@@ -183,7 +183,7 @@ async function extractTextFromImage(imagePath, mimeType) {
 }
 
 // 5. Generate structured article via Gemini
-async function generateStructuredArticle(content, postType = 'editorial', importantText = '') {
+async function generateStructuredArticle(content, importantText = '') {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
     model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
@@ -260,10 +260,11 @@ STRICT JSON FORMAT (do not change this format):
   "seo": {
     "meta_title": "",
     "meta_description": "",
+    "searchDescription": "",
+    "custom_url": "",
     "keywords": [],
     "label": [],
     "tags": [],
-    "slug": "",
     "exam_relevance": "",
     "internal_link_suggestions": []
   }
@@ -275,36 +276,38 @@ CRITICAL RULES:
 4. At least 2 MCQs.
 5. Rewrite in English where appropriate.
 6. Don't use complex words in english and hindi.
-7. title should be catchy and interesting in english only so that urls can be generated easily. it should be of length not more than 36 characters including space.
-8. slug should be title in lowercase words seperated by hyphen(-).It should be of length not more than 36 characters including hyphen(-).
-9. Ensure the first label should always be "EDITORIAL ANALYSIS" and other can be "ANSWER WRITING","CURRENT AFFAIRS " if related to it.
-10.featured_snippet -Add a short 2-3 line definition for featured snippet.Simple English.Direct question-answer format. Question should be start with "What is [topic name]" and answer should be 2-3 lines.
-11.alt_text - alt_text for image seo friendly.
-12. meta_title - meta title for blog post seo friendly. 
-13. meta_description - meta description  is rich and keyword for seo friendly.
-14. tags - tags for blog post seo friendly.
+7. title should be catchy and interesting in english only so that urls can be generated easily.
+8. Ensure the first label should always be "EDITORIAL ANALYSIS" and other can be "ANSWER WRITING","CURRENT AFFAIRS " if related to it.
+9.featured_snippet -Add a short 2-3 line definition for featured snippet.Simple English.Direct question-answer format. Question should be start with "What is [topic name]" and answer should be 2-3 lines.
+10.alt_text - alt_text for image seo friendly.
+11. meta_title - meta title for blog post seo friendly. 
+12. meta_description - meta description  is rich and keyword for seo friendly.
+13. searchDescription - it is seo friendly matched with my article and upto maximun 150 character.
+14. custom_url - seo friendly custom permalink url of length exactly or upto 36 characters. Only use lowercase letters and hyphens (e.g. "upsc-exam-analysis-2026").
+15. tags - tags for blog post seo friendly.
 15. exam_relevance - exam relevance for blog post seo friendly.
-16. keywords - keywords for blog post seo friendly. first keyword is "UPSC GS1/2/3/4 Topic" . Other keywords should be related to the subject and topic.
-17. key_facts - key facts for blog post seo friendly. This is static GK which is related to the content of context provided. it should be 3-5 points.
-18. Avoid generic AI phrases like:"bright spot", "turbulent waters", "in today's world", "plays a crucial role", "important to note", etc.Use analytical UPSC-style language with precise points.
-19. pyqs - Add at least 3 UPSC Previous Year Question style questions related to the topic for GS Paper relevance.
-20. mains_enrichment - Add 5-8 crisp analytical points useful in UPSC Mains answers.
-21. flowchart - Add 5-7 short cause-effect flowchart points in sequential order for revision.
-22. data_points - Add 3-5 important statistics, reports, indices, rankings or government data related to the topic.
-23. expert_insight - Add one original UPSC-oriented expert analysis paragraph explaining deeper implications for exam and governance perspective.
-24. related_static_topics - Add static GS topics related to the current issue.
-25. featured_snippet answer must contain the target keyword naturally within first sentence.
-26. Use semantic SEO keywords naturally throughout the content including governance, economy, social impact, international relations, environment, ethics, and policy dimensions wherever relevant.
-27. Write like an experienced UPSC mentor explaining concepts to aspirants. Avoid robotic sentence structure.
-28. mains_150 - Add 3-5 Mains-style analytical points in 150-word format.
-29. mains_250 - Add 3-4 Mains-style analytical points in 250-word format.
-30. government_schemes - Add 3-5 relevant government schemes, constitutional provisions, committees, missions, policies, SDGs, reports, or international agreements related to the topic.
-31. counter_arguments - Add 2-4 balanced counter perspectives, implementation constraints, economic concerns, or opposing viewpoints related to the issue.
-32. mains_keywords - Add 5-10 important analytical keywords or phrases useful in UPSC Mains answers.
-33. india_specific_relevance - Add 3-5 points explaining why the issue is important specifically for India’s governance, economy, society, or foreign policy.
-34. essay_angles - Add 3-5 philosophical, ethical, governance, or societal dimensions useful for UPSC Essay paper.
-35. interlinkages - Connect the topic with Economy, Geography, Ethics, Environment, Governance, Society, International Relations, or Technology wherever relevant.
-36. future_risks - Add 3-5 future governance, economic, social, environmental, or geopolitical risks if the issue remains unresolved.
+15. keywords - keywords for blog post seo friendly. first keyword is "UPSC GS1/2/3/4 Topic" . Other keywords should be related to the subject and topic.
+16. key_facts - key facts for blog post seo friendly. This is static GK which is related to the content of context provided. it should be 3-5 points.
+17. Avoid generic AI phrases like:"bright spot", "turbulent waters", "in today's world", "plays a crucial role", "important to note", etc.Use analytical UPSC-style language with precise points.
+18. pyqs - Add at least 3 UPSC Previous Year Question style questions related to the topic for GS Paper relevance.
+19. mains_enrichment - Add 5-8 crisp analytical points useful in UPSC Mains answers.
+20. flowchart - Add 5-7 short cause-effect flowchart points in sequential order for revision.
+21. data_points - Add 3-5 important statistics, reports, indices, rankings or government data related to the topic.
+22. expert_insight - Add one original UPSC-oriented expert analysis paragraph explaining deeper implications for exam and governance perspective.
+23. related_static_topics - Add static GS topics related to the current issue.
+24. featured_snippet answer must contain the target keyword naturally within first sentence.
+25. Use semantic SEO keywords naturally throughout the content including governance, economy, social impact, international relations, environment, ethics, and policy dimensions wherever relevant.
+26. Write like an experienced UPSC mentor explaining concepts to aspirants. Avoid robotic sentence structure.
+27. mains_150 - Add 3-5 Mains-style analytical points in 150-word format.
+28. mains_250 - Add 3-4 Mains-style analytical points in 250-word format.
+29. government_schemes - Add 3-5 relevant government schemes, constitutional provisions, committees, missions, policies, SDGs, reports, or international agreements related to the topic.
+30. counter_arguments - Add 2-4 balanced counter perspectives, implementation constraints, economic concerns, or opposing viewpoints related to the issue.
+31. mains_keywords - Add 5-10 important analytical keywords or phrases useful in UPSC Mains answers.
+32. india_specific_relevance - Add 3-5 points explaining why the issue is important specifically for India’s governance, economy, society, or foreign policy.
+33. essay_angles - Add 3-5 philosophical, ethical, governance, or societal dimensions useful for UPSC Essay paper.
+34. interlinkages - Connect the topic with Economy, Geography, Ethics, Environment, Governance, Society, International Relations, or Technology wherever relevant.
+35. future_risks - Add 3-5 future governance, economic, social, environmental, or geopolitical risks if the issue remains unresolved.
+36. faqs - Add 5-7 relevant FAQs with questions and answers.
 
 
 INPUT: 
@@ -319,7 +322,7 @@ ${content}`;
   return JSON.parse(cleaned);
 }
 
-function buildHtmlArticle(data, imageUrl, postType = 'editorial') {
+function buildHtmlArticle(data, imageUrl) {
   imageUrl = imageUrl || "https://lh3.googleusercontent.com/d/1m0saesFzaDIiYYwwB-cgA6jga0Usjgqj=w1200";
 
   // DEFAULT: editorial (UPSC)
@@ -328,7 +331,6 @@ function buildHtmlArticle(data, imageUrl, postType = 'editorial') {
   const publishedDate = new Date();
   const year = publishedDate.getFullYear();
   const month = String(publishedDate.getMonth() + 1).padStart(2, '0');
-  const postSlug = seo.slug || (seo.meta_title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const list = (arr) => (arr || []).map(i => `<li>${i}</li>`).join('');
   const wordCountText = [
     s.title,
@@ -431,7 +433,7 @@ function buildHtmlArticle(data, imageUrl, postType = 'editorial') {
   const html = `
 <style>
   .blog-container { background:#ffffff;font-family:Segoe UI,Arial,sans-serif;line-height:1.8;margin:auto;max-width:900px;padding:20px; }
-  .blog-title { color:#0d47a1;font-size:30px; }
+  .blog-subtitle { color:#0d47a1;font-size:30px; }
   .box { padding:14px;border-radius:6px;margin-bottom:15px; }
   .box-warning { background:#fff3e0;border-left:5px solid #ff9800; }
   .box-success { background:#e8f5e9;border-left:5px solid #43a047; }
@@ -452,15 +454,17 @@ function buildHtmlArticle(data, imageUrl, postType = 'editorial') {
   .heading-green { color:#2e7d32; }
   .heading-red { color:#c62828; }
 </style>
-<meta property="og:title" content="${seo.meta_title}">
-<meta property="og:description" content="${seo.meta_description}">
-<meta property="og:image" content="${imageUrl}">
-<meta name="twitter:card" content="summary_large_image">
-<meta property="article:modified_time" content="${new Date().toISOString()}">
-<meta name="description" content="${seo.meta_description}">
-<meta name="keywords" content="${(seo.keywords || []).join(', ')}">
+
+<!-- 
+SEARCH DESCRIPTION (Copy/paste this into Blogger Settings): 
+${seo.searchDescription}
+
+CUSTOM URL (Copy/paste this into Blogger Settings): 
+${seo.custom_url}
+-->
+
 <div class="blog-container">
-<h1 class="blog-title">${seo.meta_title}</h1>
+<p class="blog-subtitle">${seo.meta_title}</p>
 ${imgTag}
 
 <div class="box box-warning">
@@ -488,9 +492,9 @@ ${imgTag}
 <strong>📰 Current Affairs Add-on:</strong>
 <ul>${list(s.current_affairs_addon)}</ul>
 </div>
-<div id="toc" class="toc">
-<strong>📚 Table of Contents</strong>
-<ul>
+<details id="toc" class="toc" style="cursor:pointer;">
+<summary><strong>📚 Table of Contents</strong></summary>
+<ul style="margin-top:10px;">
 <li><a href="#intro">Introduction</a></li>
 <li><a href="#background">Background</a></li>
 <li><a href="#concepts">Key Concepts</a></li>
@@ -499,7 +503,7 @@ ${imgTag}
 <li><a href="#wayforward">Way Forward</a></li>
 <li><a href="#conclusion">Conclusion</a></li>
 </ul>
-</div>
+</details>
 <h2 id="intro" class="heading heading-blue">🧭 Introduction</h2>
 <p>${s.introduction}</p>
 <h2 id="background" class="heading heading-blue">🌍 Background</h2>
@@ -541,7 +545,7 @@ ${(s.flowchart || []).join(' → ')}
 <ul>${list(s.counter_arguments)}</ul>
 </div>
 <h2 class="heading heading-blue">
-🇮🇳 Why This Matters for India
+Why This Matters for India
 </h2>
 <ul>${list(s.india_specific_relevance)}</ul>
 <div class="box box-red">
@@ -570,7 +574,7 @@ ${(s.flowchart || []).join(' → ')}
 <hr style="border:1px solid #ddd;margin:30px 0;">
 <div id="about" class="box box-grey">
 <h3>About the Author</h3>
-<p><strong>AKB</strong> is a UPSC educator focusing on Editorial Analysis, GS Mains preparation, Economy and Current Affairs.</p>
+<p><strong>AKB</strong> is a UPSC educator focusing on Editorial Analysis, GS Mains preparation and Current Affairs.</p>
 </div>
 <div class="box box-primary">
 <strong>🔗 Related Articles:</strong>
@@ -594,9 +598,9 @@ ${mcqs}
 <hr style="border:1px solid #ddd;margin:30px 0;">
 <h2>❓ FAQs</h2>
 ${(s.faqs || []).map(f => `
-<details open>
-<summary><strong>${f.question}</strong></summary>
-<p>${f.answer}</p>
+<details style="background:#f5f5f5;border-radius:6px;margin-bottom:10px;padding:12px;">
+<summary style="cursor:pointer;"><strong>${f.question}</strong></summary>
+<p style="margin-top:10px;">${f.answer}</p>
 </details>`).join('')}
 
 <div style="background:#e3f2fd;border-radius:6px;padding:12px;">
@@ -623,33 +627,6 @@ ${(seo.tags || []).map(t => `<span style="background:#f1f1f1;padding:6px 10px;ma
   )}
 }
 </script>
-
-<script type="application/ld+json">
-{
- "@context":"https://schema.org",
- "@type":"BreadcrumbList",
- "itemListElement":[
- {
- "@type":"ListItem",
- "position":1,
- "name":"Home",
- "item":"https://www.jkdmm.in/"
- },
- {
- "@type":"ListItem",
- "position":2,
- "name":"Editorial Analysis",
- "item":"https://www.jkdmm.in/search/label/EDITORIAL%20ANALYSIS"
- },
- {
- "@type":"ListItem",
- "position":3,
- "name":"${s.title}",
- "item":"https://www.jkdmm.in/${year}/${month}/${postSlug}.html"
- }
- ]
-}
-</script>
 <script type="application/ld+json">
 ${JSON.stringify({
     "@context": "https://schema.org",
@@ -657,7 +634,7 @@ ${JSON.stringify({
 
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://www.jkdmm.in/${year}/${month}/${postSlug}.html`
+      "@id": `posturl`
     },
 
     "headline": seo.meta_title,
@@ -738,14 +715,9 @@ ${JSON.stringify({
 }
 
 // 7. RenderForm — generate thumbnail
-async function generateThumbnail(title, postType = 'editorial') {
+async function generateThumbnail(title) {
   let template = process.env.RENDERFORM_TEMPLATE || 'bad-mermaids-stretch-weakly-1555';
   let titleKey = 'title.text';
-
-  if (postType === 'job_posting') {
-    template = 'purple-dragonflies-push-fiercely-1833';
-    titleKey = 'text_1.text';
-  }
 
   const resp = await axios.post(
     'https://get.renderform.io/api/v2/render',
@@ -801,7 +773,7 @@ async function uploadToGoogleDrive(buffer, filename, contentType) {
 }
 
 // 10. Publish to Blogger
-async function publishToBlogger(title, content, labels, slug) {
+async function publishToBlogger(title, content, labels, searchDescription) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.BLOGGER_CLIENT_ID,
     process.env.BLOGGER_CLIENT_SECRET
@@ -809,14 +781,21 @@ async function publishToBlogger(title, content, labels, slug) {
   oauth2Client.setCredentials({ refresh_token: process.env.BLOGGER_REFRESH_TOKEN });
   const blogger = google.blogger({ version: 'v3', auth: oauth2Client });
 
+  const requestBody = {
+    kind: 'blogger#post',
+    title,
+    content,
+    labels: Array.isArray(labels) ? labels : [labels],
+  };
+
+  if (searchDescription) {
+    requestBody.customMetaData = searchDescription;
+  }
+
   const resp = await blogger.posts.insert({
     blogId: process.env.BLOGGER_BLOG_ID,
-    requestBody: {
-      kind: 'blogger#post',
-      title,
-      content,
-      labels: Array.isArray(labels) ? labels : [labels],
-    },
+    isDraft: true,
+    requestBody,
   });
   return resp.data;
 }
@@ -871,7 +850,7 @@ function pushStep(jobId, stepResult) {
 }
 
 // ─── MAIN PIPELINE ──────────────────────────────────────────────────────────
-async function runPipeline(jobId, urls, imagePaths, postType = 'editorial', importantText = '') {
+async function runPipeline(jobId, urls, imagePaths, importantText = '') {
   try {
     // ── Step 1: Fetch URL content ────────────────────────────────────────────
     pushStep(jobId, { id: 'fetch', icon: '🔗', label: 'Fetching URL Content', status: 'active', data: null });
@@ -948,27 +927,15 @@ async function runPipeline(jobId, urls, imagePaths, postType = 'editorial', impo
     }
 
     // ── Step 4: Generate structured article via Gemini ────────────────────────
-    pushStep(jobId, { id: 'ai', icon: '✨', label: `Gemini Writing ${postType === 'job_posting' ? 'Job' : 'Article'}`, status: 'active', data: null });
-    updateJob(jobId, { step: `Generating ${postType} with Gemini AI...`, progress: 35 });
+    pushStep(jobId, { id: 'ai', icon: '✨', label: `Gemini Writing Article`, status: 'active', data: null });
+    updateJob(jobId, { step: `Generating Article with Gemini AI...`, progress: 35 });
 
-    const articleData = await generateStructuredArticle(mergedContent, postType, importantText);
+    const articleData = await generateStructuredArticle(mergedContent, importantText);
     let s, seo, postTitle;
 
-    if (postType === 'job_posting') {
-      s = articleData;
-      seo = {
-        meta_title: articleData.title,
-        meta_description: articleData.summary,
-        label: articleData.label,
-        tags: articleData.tags,
-        slug: (articleData.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')
-      };
-      postTitle = articleData.title;
-    } else {
-      s = articleData.structured;
-      seo = articleData.seo;
-      postTitle = s.title || seo.meta_title;
-    }
+    s = articleData.structured;
+    seo = articleData.seo;
+    postTitle = s.title || seo.meta_title;
 
     pushStep(jobId, {
       id: 'ai', icon: '✨', label: 'Content Generated by Gemini', status: 'done',
@@ -1002,7 +969,7 @@ async function runPipeline(jobId, urls, imagePaths, postType = 'editorial', impo
     let driveFileId = '';
     let thumbnailDownloadUrl = '';
     try {
-      thumbnailDownloadUrl = await generateThumbnail(postTitle, postType);
+      thumbnailDownloadUrl = await generateThumbnail(postTitle);
       pushStep(jobId, {
         id: 'thumb', icon: '🎨', label: 'Thumbnail Generated', status: 'done',
         data: {
@@ -1042,7 +1009,7 @@ async function runPipeline(jobId, urls, imagePaths, postType = 'editorial', impo
     // ── Step 7: Build HTML article ─────────────────────────────────────────
     pushStep(jobId, { id: 'html', icon: '🏗️', label: 'Building HTML Article', status: 'active', data: null });
     updateJob(jobId, { step: 'Building HTML article...', progress: 78 });
-    const htmlContent = buildHtmlArticle(articleData, driveImageUrl, postType);
+    const htmlContent = buildHtmlArticle(articleData, driveImageUrl);
 
     pushStep(jobId, {
       id: 'html', icon: '🏗️', label: 'HTML Article Built', status: 'done',
@@ -1060,7 +1027,7 @@ async function runPipeline(jobId, urls, imagePaths, postType = 'editorial', impo
 
     let bloggerPost = null;
     try {
-      bloggerPost = await publishToBlogger(postTitle, htmlContent, seo.label, seo.slug);
+      bloggerPost = await publishToBlogger(postTitle, htmlContent, seo.label, seo.searchDescription);
       pushStep(jobId, {
         id: 'publish', icon: '📤', label: 'Published to Blogger', status: 'done',
         data: {
@@ -1123,7 +1090,6 @@ async function runPipeline(jobId, urls, imagePaths, postType = 'editorial', impo
         driveImageUrl,
         thumbnailUrl: thumbnailDownloadUrl,
         title: postTitle,
-        slug: seo.slug,
         articleData,
       },
     });
@@ -1164,7 +1130,6 @@ app.post('/api/generate', upload.array('images', 10), async (req, res) => {
       return res.status(400).json({ error: 'Please provide at least one URL or image.' });
     }
 
-    const postType = req.body.postType || 'editorial';
     const importantText = req.body.importantText || '';
 
     const jobId = uuidv4();
@@ -1173,7 +1138,6 @@ app.post('/api/generate', upload.array('images', 10), async (req, res) => {
       status: 'running',
       step: 'Starting pipeline...',
       progress: 0,
-      postType,
       createdAt: new Date().toISOString(),
       sseClients: [],
     };
@@ -1181,7 +1145,7 @@ app.post('/api/generate', upload.array('images', 10), async (req, res) => {
     res.json({ jobId });
 
     // Run pipeline asynchronously
-    runPipeline(jobId, urls, imagePaths, postType, importantText);
+    runPipeline(jobId, urls, imagePaths, importantText);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
