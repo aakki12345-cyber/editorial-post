@@ -742,7 +742,27 @@ async function downloadImage(url) {
   return { buffer: Buffer.from(resp.data), contentType: resp.headers['content-type'] || 'image/png' };
 }
 
-// 9. Upload to Google Drive
+// 9. Upload to Cloudinary
+async function uploadToCloudinary(buffer, filename) {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'jkdmm';
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'jkdmm_upload';
+
+  const form = new FormData();
+  form.append('file', buffer, { filename });
+  form.append('upload_preset', uploadPreset);
+
+  const resp = await axios.post(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    form,
+    {
+      headers: form.getHeaders(),
+      timeout: 60000,
+    }
+  );
+  return resp.data.public_id; // public_id of the uploaded image
+}
+
+// 9.5 Upload to Google Drive
 async function uploadToGoogleDrive(buffer, filename, contentType) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_DRIVE_CLIENT_ID,
@@ -965,8 +985,8 @@ async function runPipeline(jobId, urls, imagePaths, importantText = '') {
     pushStep(jobId, { id: 'thumb', icon: '🎨', label: 'Generating Thumbnail', status: 'active', data: null });
     updateJob(jobId, { step: 'Generating thumbnail via RenderForm...', progress: 60 });
 
-    let driveImageUrl = '';
-    let driveFileId = '';
+    let cloudinaryImageUrl = '';
+    let cloudinaryImageId = '';
     let thumbnailDownloadUrl = '';
     try {
       thumbnailDownloadUrl = await generateThumbnail(postTitle);
@@ -982,20 +1002,21 @@ async function runPipeline(jobId, urls, imagePaths, importantText = '') {
 
       const { buffer, contentType } = await downloadImage(thumbnailDownloadUrl);
 
-      // ── Step 6: Upload thumbnail to Google Drive ──────────────────────────
-      pushStep(jobId, { id: 'drive', icon: '💾', label: 'Uploading to Google Drive', status: 'active', data: null });
-      updateJob(jobId, { step: 'Uploading thumbnail to Google Drive...', progress: 70 });
+      // ── Step 6: Upload thumbnail to Cloudinary ──────────────────────────
+      pushStep(jobId, { id: 'cloudinary', icon: '☁️', label: 'Uploading to Cloudinary', status: 'active', data: null });
+      updateJob(jobId, { step: 'Uploading thumbnail to Cloudinary...', progress: 70 });
 
-      driveFileId = await uploadToGoogleDrive(buffer, `${postTitle}.png`, contentType);
-      driveImageUrl = `https://lh3.googleusercontent.com/d/${driveFileId}=w1200`;
+      cloudinaryImageId = await uploadToCloudinary(buffer, `${postTitle}.png`);
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'jkdmm';
+      cloudinaryImageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_1200/${cloudinaryImageId}.webp`;
 
       pushStep(jobId, {
-        id: 'drive', icon: '💾', label: 'Thumbnail Uploaded to Drive', status: 'done',
+        id: 'cloudinary', icon: '☁️', label: 'Thumbnail Uploaded to Cloudinary', status: 'done',
         data: {
-          type: 'drive',
-          fileId: driveFileId,
-          imageUrl: driveImageUrl,
-          driveLink: `https://drive.google.com/file/d/${driveFileId}/view`,
+          type: 'cloudinary',
+          imageId: cloudinaryImageId,
+          imageUrl: cloudinaryImageUrl,
+          cloudinaryLink: cloudinaryImageUrl,
         },
       });
     } catch (err) {
@@ -1009,7 +1030,7 @@ async function runPipeline(jobId, urls, imagePaths, importantText = '') {
     // ── Step 7: Build HTML article ─────────────────────────────────────────
     pushStep(jobId, { id: 'html', icon: '🏗️', label: 'Building HTML Article', status: 'active', data: null });
     updateJob(jobId, { step: 'Building HTML article...', progress: 78 });
-    const htmlContent = buildHtmlArticle(articleData, driveImageUrl);
+    const htmlContent = buildHtmlArticle(articleData, cloudinaryImageUrl);
 
     pushStep(jobId, {
       id: 'html', icon: '🏗️', label: 'HTML Article Built', status: 'done',
@@ -1086,8 +1107,8 @@ async function runPipeline(jobId, urls, imagePaths, importantText = '') {
       result: {
         postUrl: bloggerPost?.url || null,
         postId: bloggerPost?.id || null,
-        driveFileId,
-        driveImageUrl,
+        cloudinaryImageId,
+        cloudinaryImageUrl,
         thumbnailUrl: thumbnailDownloadUrl,
         title: postTitle,
         articleData,

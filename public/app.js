@@ -211,7 +211,7 @@ function updateProgress(data) {
 }
 
 // Map step id → pipe dot id
-const PIPE_MAP = { fetch:'pipe-fetch', ocr:'pipe-ocr', ai:'pipe-ai', thumb:'pipe-thumb', drive:'pipe-drive', html:'pipe-html', publish:'pipe-publish', index:'pipe-index' };
+const PIPE_MAP = { fetch:'pipe-fetch', ocr:'pipe-ocr', ai:'pipe-ai', thumb:'pipe-thumb', cloudinary:'pipe-cloudinary', html:'pipe-html', publish:'pipe-publish', index:'pipe-index' };
 
 function updatePipelineDots(stepResults) {
   // Reset all
@@ -294,7 +294,7 @@ function buildSubText(sr) {
   if (d.type === 'ocr')       return d.skipped ? 'No images provided' : `${d.processed} image(s) processed`;
   if (d.type === 'article')   return d.title || '';
   if (d.type === 'thumbnail') return d.error ? 'Failed — continuing without image' : 'Image ready';
-  if (d.type === 'drive')     return d.fileId ? `File ID: ${d.fileId}` : '';
+  if (d.type === 'cloudinary') return d.imageId ? `Image ID: ${d.imageId}` : '';
   if (d.type === 'html')      return `${(d.chars/1000).toFixed(1)}K chars HTML`;
   if (d.type === 'blogger')   return d.postUrl || (d.error ? 'Credentials not configured' : '');
   if (d.type === 'indexing')  return d.skipped ? 'Skipped — no post URL' : (d.url || '');
@@ -402,11 +402,11 @@ function buildStepBody(sr) {
     `;
   }
 
-  // ── Google Drive ───────────────────────────────────────────────────────────
-  if (d.type === 'drive') {
+  // ── Cloudinary ─────────────────────────────────────────────────────────────
+  if (d.type === 'cloudinary') {
     return `
-      <div class="sl-kv"><span class="sl-k">File ID</span><span class="sl-v">${esc(d.fileId)}</span></div>
-      <div class="sl-kv"><span class="sl-k">Drive Link</span><span class="sl-v"><a href="${esc(d.driveLink)}" target="_blank">Open in Drive ↗</a></span></div>
+      <div class="sl-kv"><span class="sl-k">Image ID</span><span class="sl-v">${esc(d.imageId)}</span></div>
+      <div class="sl-kv"><span class="sl-k">Cloudinary Link</span><span class="sl-v"><a href="${esc(d.cloudinaryLink)}" target="_blank">View image ↗</a></span></div>
       <img class="sl-thumb-img" src="${esc(d.imageUrl)}" alt="Uploaded thumbnail" />
     `;
   }
@@ -478,7 +478,7 @@ function showResult(result, errorMsg) {
     { label: 'Status',      value: result.postUrl ? '✅ Published' : '⚠️ Skipped' },
     { label: 'Title',       value: result.title || '—' },
     { label: 'Slug',        value: result.slug || '—' },
-    { label: 'Drive Image', value: result.driveFileId ? '✅ Uploaded' : '—' },
+    { label: 'Cloudinary Image', value: result.cloudinaryImageId ? '✅ Uploaded' : '—' },
     { label: 'Post ID',     value: result.postId || '—' },
   ];
   grid.innerHTML = items.map(it => `
